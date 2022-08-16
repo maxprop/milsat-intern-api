@@ -1,4 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MilsatInternAPI.Data;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<MilsatInternAPIContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MilsatInternAPIContext") ?? throw new InvalidOperationException("Connection string 'MilsatInternAPIContext' not found.")));
 
 // Add services to the container.
 
