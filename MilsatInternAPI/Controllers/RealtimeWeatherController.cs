@@ -6,13 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using MilsatInternAPI.Models;
 
-namespace RealtimeWeatherApi2.Controllers
+namespace MilsatInternAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class RealtimeWeatherController : ControllerBase
     {
-        private static readonly string API_KEY = "f175347ea1218ec428df411ea096e383";
+        private static readonly string KEY = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("token")["weatherKey"].ToString();
 
         [HttpGet("[action]/{city}")]
         public async Task<IActionResult> City(string city)
@@ -22,7 +22,7 @@ namespace RealtimeWeatherApi2.Controllers
                 try
                 {
                     client.BaseAddress = new Uri("http://api.openweathermap.org");
-                    var response = await client.GetAsync($"/data/2.5/weather?q={city}&appid={API_KEY}&units=metric");
+                    var response = await client.GetAsync($"/data/2.5/weather?q={city}&appid={KEY}&units=metric");
                     response.EnsureSuccessStatusCode();
 
                     var stringResult = await response.Content.ReadAsStringAsync();
