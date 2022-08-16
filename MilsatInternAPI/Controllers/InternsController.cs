@@ -10,7 +10,7 @@ using MilsatInternAPI.Models;
 
 namespace MilsatInternAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/")]
     [ApiController]
     public class InternsController : ControllerBase
     {
@@ -22,82 +22,116 @@ namespace MilsatInternAPI.Controllers
         }
 
         // GET: api/Interns
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Intern>>> GetIntern()
+        [HttpGet("GetInterns/pageNumber/pageSize")]
+        public async Task<ActionResult<IEnumerable<Intern>>> GetIntern(int pageNumber = 1, int pageSize = 1)
         {
-          if (_context.Intern == null)
-          {
-              return NotFound();
-          }
-            return await _context.Intern.ToListAsync();
-        }
-
-        // GET: api/Interns/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Intern>> GetIntern(int id)
-        {
-          if (_context.Intern == null)
-          {
-              return NotFound();
-          }
-            var intern = await _context.Intern.FindAsync(id);
-
-            if (intern == null)
+            if (_context.Intern == null)
             {
                 return NotFound();
             }
 
-            return intern;
+            var pagedData = await _context.Intern
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return pagedData;
         }
+
+
+        [HttpGet("GetIntern/")]
+        public async Task<ActionResult<IEnumerable<Intern>>> GetIntern([FromQuery] GetInternVm model)
+        {
+            if (_context.Intern == null)
+            {
+                return NotFound();
+            }
+
+            if (model.id == null && model.name == null && model.department == null)
+            {
+                return BadRequest("At least a search query is always required");
+            }
+
+            // When ID is received
+            if (model.id != null)
+            {
+                var intern = await _context.Intern.Where(x => x.Id == model.id).FirstOrDefaultAsync();
+                if (intern == null)
+                {
+                    return NotFound("Invalid ID supplied");
+                }
+
+                List<Intern> collectedIntern = new List<Intern> { intern };
+                return collectedIntern;
+            }
+
+            // Received only name without department
+            else if (model.name != null && model.department == null)
+            {
+                var interns = await _context.Intern.Where(x => x.Name.Contains(model.name)).ToListAsync();
+                return interns;
+            }
+
+            //Received only Department without name
+            //else if (model.name == null && model.department != null)
+            {
+                var interns = await _context.Intern.Where(x => x.Department.Contains(model.department)).ToListAsync();
+                return interns;
+            }
+
+        }
+
 
         // PUT: api/Interns/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutIntern(int id, Intern intern)
+        [HttpPut("UpdateIntern")]
+        public async Task<IActionResult> PutIntern(UpdateInternVm intern)
         {
-            if (id != intern.Id)
-            {
-                return BadRequest();
-            }
+            var singleIntern = _context.Intern.Where(x => x.Id == intern.Id).FirstOrDefault();
 
-            _context.Entry(intern).State = EntityState.Modified;
+            if (singleIntern == null)
+            {
+                return NotFound("Invalid ID Supplied");
+            }
+            singleIntern.Department = intern.Department;
+
+            _context.Entry(singleIntern).State = EntityState.Modified;
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                if (!InternExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw ex;
             }
 
-            return NoContent();
+            return Ok("Update Successful");
         }
 
         // POST: api/Interns
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Intern>> PostIntern(Intern intern)
+        [HttpPost("CreateInterns")]
+        public async Task<ActionResult<Intern>> PostIntern(IEnumerable<CreateInternVm> intern)
         {
-          if (_context.Intern == null)
-          {
-              return Problem("Entity set 'MilsatInternAPIContext.Intern'  is null.");
-          }
-            _context.Intern.Add(intern);
+            if (_context.Intern == null)
+            {
+                return Problem("Entity set 'MilsatInternsContext.Intern'  is null.");
+            }
+
+            foreach (CreateInternVm eachIntern in intern)
+            {
+                Intern singleIntern = new Intern { Name = eachIntern.Name, Department = eachIntern.Department };
+                _context.Intern.Add(singleIntern);
+            }
+
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetIntern", new { id = intern.Id }, intern);
+            return Ok("Interns Asdded Successfully");
         }
 
         // DELETE: api/Interns/5
-        [HttpDelete("{id}")]
+        [HttpDelete("RemoveIntern/{id}")]
         public async Task<IActionResult> DeleteIntern(int id)
         {
             if (_context.Intern == null)
