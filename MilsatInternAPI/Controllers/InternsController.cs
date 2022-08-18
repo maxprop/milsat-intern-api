@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MilsatInternAPI.Data;
 using MilsatInternAPI.Models;
+using Microsoft.Extensions.Logging;
 
 namespace MilsatInternAPI.Controllers
 {
@@ -15,10 +16,12 @@ namespace MilsatInternAPI.Controllers
     public class InternsController : ControllerBase
     {
         private readonly MilsatInternAPIContext _context;
+        private readonly ILogger<InternsController> _logger;
 
-        public InternsController(MilsatInternAPIContext context)
+        public InternsController(MilsatInternAPIContext context, ILogger<InternsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/Interns
@@ -89,6 +92,7 @@ namespace MilsatInternAPI.Controllers
         {
             var singleIntern = _context.Intern.Where(x => x.Id == intern.Id).FirstOrDefault();
 
+            _logger.LogInformation("try to update info");
             if (singleIntern == null)
             {
                 return NotFound("Invalid ID Supplied");
