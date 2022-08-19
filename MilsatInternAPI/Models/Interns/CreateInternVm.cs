@@ -1,8 +1,7 @@
-﻿namespace MilsatInternAPI.Models
+﻿namespace MilsatInternAPI.Models.Interns
 {
-    public class Intern
+    public class CreateInternVm
     {
-        public int Id { get; set; }
         public string Name { get; set; }
         public string Department { get; set; }
     }

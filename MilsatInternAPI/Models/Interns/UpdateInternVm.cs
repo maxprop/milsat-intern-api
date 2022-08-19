@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MilsatInternAPI.Models
+namespace MilsatInternAPI.Models.Interns
 {
     public class UpdateInternVm
     {

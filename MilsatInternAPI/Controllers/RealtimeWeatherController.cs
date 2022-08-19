@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
-using MilsatInternAPI.Models;
+using MilsatInternAPI.Models.Weather;
 
 namespace MilsatInternAPI.Controllers
 {

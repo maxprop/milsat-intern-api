@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using MilsatInternAPI.Models;
+using MilsatInternAPI.Models.Interns;
+using MilsatInternAPI.Models.Mentors;
 
 namespace MilsatInternAPI.Data
 {
@@ -14,6 +15,7 @@ namespace MilsatInternAPI.Data
         {
         }
 
-        public DbSet<MilsatInternAPI.Models.Intern> Intern { get; set; } = default!;
+        public DbSet<Intern> Intern { get; set; } = default!;
+        public DbSet<Mentor> Mentor { get; set; } = default!;
     }
 }

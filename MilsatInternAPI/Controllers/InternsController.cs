@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MilsatInternAPI.Data;
-using MilsatInternAPI.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using MilsatInternAPI.Models.Interns;
 
 namespace MilsatInternAPI.Controllers
 {
