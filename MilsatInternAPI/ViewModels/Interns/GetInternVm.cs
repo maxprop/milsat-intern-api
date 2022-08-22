@@ -1,4 +1,4 @@
-﻿namespace MilsatInternAPI.Models.Interns
+﻿namespace MilsatInternAPI.ViewModels.Interns
 {
     public class GetInternVm
     {

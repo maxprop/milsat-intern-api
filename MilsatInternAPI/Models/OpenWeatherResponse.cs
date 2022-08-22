@@ -1,4 +1,4 @@
-﻿namespace MilsatInternAPI.Models.Weather
+﻿namespace MilsatInternAPI.Models
 {
     public class OpenWeatherResponse
     {

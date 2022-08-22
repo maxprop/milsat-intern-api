@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MilsatInternAPI.Data;
-using MilsatInternAPI.Models.Mentors;
+using MilsatInternAPI.Models;
 
 namespace MilsatInternAPI.Controllers
 {

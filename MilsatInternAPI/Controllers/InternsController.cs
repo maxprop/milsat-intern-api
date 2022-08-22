@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using MilsatInternAPI.Data;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using MilsatInternAPI.Models.Interns;
+using MilsatInternAPI.ViewModels.Interns;
+using MilsatInternAPI.Models;
 
 namespace MilsatInternAPI.Controllers
 {
@@ -27,7 +28,7 @@ namespace MilsatInternAPI.Controllers
 
         // GET: api/Interns
         [HttpGet("GetInterns/pageNumber/pageSize")]
-        public async Task<ActionResult<IEnumerable<Intern>>> GetIntern(int pageNumber = 1, int pageSize = 1)
+        public async Task<ActionResult<IEnumerable<Intern>>> GetIntern(int pageNumber = 1, int pageSize = 15)
         {
             _logger.LogInformation($"Received a request to fetch paginated Intern(s): Request: pageNumber:{pageNumber}, pageSize:{pageSize}");
             if (_context.Intern == null)

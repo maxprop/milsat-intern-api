@@ -1,4 +1,4 @@
-﻿namespace MilsatInternAPI.Models.Mentors
+﻿namespace MilsatInternAPI.Models
 {
     public class Mentor
     {
