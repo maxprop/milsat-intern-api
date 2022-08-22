@@ -55,7 +55,7 @@ namespace MilsatInternAPI.Controllers
         [HttpPut("UpdateMentor/{id}")]
         public async Task<IActionResult> PutMentor(int id, Mentor mentor)
         {
-            if (id != mentor.Id)
+            if (id != mentor.MentorId)
             {
                 return BadRequest();
             }
@@ -93,7 +93,7 @@ namespace MilsatInternAPI.Controllers
             _context.Mentor.Add(mentor);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMentor", new { id = mentor.Id }, mentor);
+            return CreatedAtAction("GetMentor", new { id = mentor.MentorId }, mentor);
         }
 
         // DELETE: api/Mentors/5
@@ -118,7 +118,7 @@ namespace MilsatInternAPI.Controllers
 
         private bool MentorExists(int id)
         {
-            return (_context.Mentor?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Mentor?.Any(e => e.MentorId == id)).GetValueOrDefault();
         }
     }
 }

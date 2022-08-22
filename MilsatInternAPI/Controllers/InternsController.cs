@@ -72,7 +72,7 @@ namespace MilsatInternAPI.Controllers
 
                 if (model.id != null)
                 {
-                    var intern = await _context.Intern.Where(x => x.Id == model.id).FirstOrDefaultAsync();
+                    var intern = await _context.Intern.Where(x => x.InternId == model.id).FirstOrDefaultAsync();
                     if (intern == null)
                     {
                         _logger.LogInformation("Invalid ID Received.");
@@ -115,7 +115,7 @@ namespace MilsatInternAPI.Controllers
             _logger.LogInformation($"Received a request to update Intern: Request:{JsonConvert.SerializeObject(intern)}");
             try
             {
-                var singleIntern = _context.Intern.Where(x => x.Id == intern.Id).FirstOrDefault();
+                var singleIntern = _context.Intern.Where(x => x.InternId == intern.Id).FirstOrDefault();
 
                 if (singleIntern == null)
                 {
@@ -199,7 +199,7 @@ namespace MilsatInternAPI.Controllers
 
         private bool InternExists(int id)
         {
-            return (_context.Intern?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Intern?.Any(e => e.InternId == id)).GetValueOrDefault();
         }
     }
 }

@@ -2,8 +2,9 @@
 {
     public class Intern
     {
-        public int Id { get; set; }
+        public int InternId { get; set; }
         public string Name { get; set; }
         public string Department { get; set; }
+        public Mentor Mentor { get; set; }
     }
 }
