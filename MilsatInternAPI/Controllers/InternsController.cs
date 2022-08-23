@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using MilsatInternAPI.ViewModels.Interns;
 using MilsatInternAPI.Models;
+using MilsatInternAPI.Enums;
 
 namespace MilsatInternAPI.Controllers
 {
@@ -28,7 +29,7 @@ namespace MilsatInternAPI.Controllers
 
         // GET: api/Interns
         [HttpGet("GetInterns/pageNumber/pageSize")]
-        public async Task<ActionResult<IEnumerable<Intern>>> GetIntern(int pageNumber = 1, int pageSize = 15)
+        public async Task<ActionResult<IEnumerable<InternDTO>>> GetIntern(int pageNumber = 1, int pageSize = 15)
         {
             _logger.LogInformation($"Received a request to fetch paginated Intern(s): Request: pageNumber:{pageNumber}, pageSize:{pageSize}");
             if (_context.Intern == null)
@@ -37,11 +38,25 @@ namespace MilsatInternAPI.Controllers
             }
             try
             {
-                var pagedData = await _context.Intern
+                var pagedData = await _context.Intern.Include(_intern => _intern.Mentor)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
-                return pagedData;
+
+                var dto = new List<InternDTO>();
+                foreach (var _intern in pagedData)
+                {
+                    InternDTO intern_dto = new InternDTO
+                    {
+                        InternId = _intern.InternId,
+                        Name = _intern.Name,
+                        Department = _intern.Department,
+                        MentorId = _intern.Mentor.MentorId,
+                        MentorName = _intern.Mentor.Name
+                    };
+                    dto.Add(intern_dto);
+                 }
+                    return dto;
             }
             catch (Exception ex)
             {
@@ -53,7 +68,7 @@ namespace MilsatInternAPI.Controllers
 
 
         [HttpGet("GetIntern/")]
-        public async Task<ActionResult<IEnumerable<Intern>>> GetIntern([FromQuery] GetInternVm model)
+        public async Task<ActionResult<IEnumerable<InternDTO>>> GetIntern([FromQuery] GetInternVm model)
         {
             _logger.LogInformation($"Received a request to Fetch Intern(s): Request:{JsonConvert.SerializeObject(model)}");
             if (_context.Intern == null)
@@ -72,30 +87,65 @@ namespace MilsatInternAPI.Controllers
 
                 if (model.id != null)
                 {
-                    var intern = await _context.Intern.Where(x => x.InternId == model.id).FirstOrDefaultAsync();
+                    var intern = await _context.Intern.Include(_intern => _intern.Mentor)
+                                                      .Where(x => x.InternId == model.id)
+                                                      .FirstOrDefaultAsync();
                     if (intern == null)
-                    {
+                    {   
                         _logger.LogInformation("Invalid ID Received.");
                         return NotFound("Invalid ID supplied");
                     }
-
-                    List<Intern> collectedIntern = new List<Intern> { intern };
+                    var dto = new InternDTO {   InternId = intern.InternId,
+                                                Name = intern.Name, Department = intern.Department,
+                                                MentorId = intern.Mentor.MentorId, MentorName = intern.Mentor.Name};
+                    List<InternDTO> collectedIntern = new List<InternDTO> { dto };
                     return collectedIntern;
                 }
 
                 // Received only name without department
                 else if (model.name != null && model.department == null)
                 {
-                    var interns = await _context.Intern.Where(x => x.Name.Contains(model.name)).ToListAsync();
-                    return interns;
+                    var interns = await _context.Intern.Include(_intern => _intern.Mentor)
+                                                       .Where(x => x.Name.Contains(model.name))
+                                                       .ToListAsync();
+
+                    var dto = new List<InternDTO>();
+                    foreach (var _intern in interns)
+                    {
+                        InternDTO intern_dto = new InternDTO
+                        {
+                            InternId = _intern.InternId,
+                            Name = _intern.Name,
+                            Department = _intern.Department,
+                            MentorId = _intern.Mentor.MentorId,
+                            MentorName = _intern.Mentor.Name
+                        };
+                        dto.Add(intern_dto);
+                    }
+                    return dto;
                 }
 
                 //Received only Department without name
                 //else if (model.name == null && model.department != null)
                 else
                 {
-                    var interns = await _context.Intern.Where(x => x.Department.Contains(model.department)).ToListAsync();
-                    return interns;
+                    var interns = await _context.Intern.Include(_intern => _intern.Mentor)
+                                                       .Where(x => x.Department == model.department)
+                                                       .ToListAsync();
+                    var dto = new List<InternDTO>();
+                    foreach (var _intern in interns)
+                    {
+                        InternDTO intern_dto = new InternDTO
+                        {
+                            InternId = _intern.InternId,
+                            Name = _intern.Name,
+                            Department = _intern.Department,
+                            MentorId = _intern.Mentor.MentorId,
+                            MentorName = _intern.Mentor.Name
+                        };
+                        dto.Add(intern_dto);
+                    }
+                    return dto;
                 }
             }
             catch (Exception ex)
@@ -122,7 +172,20 @@ namespace MilsatInternAPI.Controllers
                     _logger.LogInformation($"Invalid ID supplied");
                     return NotFound("Invalid ID Supplied");
                 }
-                singleIntern.Department = intern.Department;
+                if (singleIntern.Department != intern.Department)
+                {
+                    singleIntern.Department = intern.Department;
+                    var availableMentors = await _context.Mentor.Where(mentor => mentor.Department == intern.Department).ToListAsync();
+                    int totalAvailableMentors = availableMentors.Count();
+                    if (totalAvailableMentors == 0)
+                    {
+                        return NotFound("No mentor found for this department");
+                    }
+
+                    var selector = PickMentor(totalAvailableMentors);
+                    var mentor = availableMentors[selector];
+                    singleIntern.Mentor = mentor;
+                }
 
                 _context.Entry(singleIntern).State = EntityState.Modified;
 
@@ -153,7 +216,19 @@ namespace MilsatInternAPI.Controllers
             {
                 foreach (CreateInternVm eachIntern in intern)
                 {
-                    Intern singleIntern = new Intern { Name = eachIntern.Name, Department = eachIntern.Department };
+                    var singleIntern = new Intern { Name = eachIntern.Name, Department = eachIntern.Department };
+
+                    var availableMentors = await _context.Mentor.Where(mentor => mentor.Department == eachIntern.Department).ToListAsync();
+                    int totalAvailableMentors = availableMentors.Count();
+                    if (totalAvailableMentors == 0)
+                    {
+                        return NotFound("No mentor found for this department");
+                    }
+
+                    var selector = PickMentor(totalAvailableMentors);
+                    var mentor = availableMentors[selector];
+                    singleIntern.Mentor = mentor;
+
                     _context.Intern.Add(singleIntern);
                 }
 
@@ -200,6 +275,13 @@ namespace MilsatInternAPI.Controllers
         private bool InternExists(int id)
         {
             return (_context.Intern?.Any(e => e.InternId == id)).GetValueOrDefault();
+        }
+
+        private int PickMentor(int total)
+        {
+            Random random = new Random();
+            var selector = random.Next(total);
+            return selector;
         }
     }
 }

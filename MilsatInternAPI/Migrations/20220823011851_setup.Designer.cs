@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MilsatInternAPI.Data;
 
@@ -10,9 +11,10 @@ using MilsatInternAPI.Data;
 namespace MilsatInternAPI.Migrations
 {
     [DbContext(typeof(MilsatInternAPIContext))]
-    partial class MilsatInternAPIContextModelSnapshot : ModelSnapshot
+    [Migration("20220823011851_setup")]
+    partial class setup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -67,50 +69,6 @@ namespace MilsatInternAPI.Migrations
                     b.HasKey("MentorId");
 
                     b.ToTable("Mentor");
-
-                    b.HasData(
-                        new
-                        {
-                            MentorId = 1,
-                            Department = 1,
-                            Name = "Sodiq Agboola",
-                            Status = 0
-                        },
-                        new
-                        {
-                            MentorId = 2,
-                            Department = 4,
-                            Name = "Emmanuel Victor",
-                            Status = 0
-                        },
-                        new
-                        {
-                            MentorId = 3,
-                            Department = 3,
-                            Name = "Meenat Victoria",
-                            Status = 0
-                        },
-                        new
-                        {
-                            MentorId = 4,
-                            Department = 5,
-                            Name = "Ayodeji Smart",
-                            Status = 0
-                        },
-                        new
-                        {
-                            MentorId = 5,
-                            Department = 0,
-                            Name = "Michael Smith",
-                            Status = 0
-                        },
-                        new
-                        {
-                            MentorId = 6,
-                            Department = 2,
-                            Name = "Elon Musk",
-                            Status = 0
-                        });
                 });
 
             modelBuilder.Entity("MilsatInternAPI.Models.Intern", b =>

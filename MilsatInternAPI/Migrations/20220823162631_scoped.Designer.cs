@@ -11,8 +11,8 @@ using MilsatInternAPI.Data;
 namespace MilsatInternAPI.Migrations
 {
     [DbContext(typeof(MilsatInternAPIContext))]
-    [Migration("20220822145019_fresh_start")]
-    partial class fresh_start
+    [Migration("20220823162631_scoped")]
+    partial class scoped
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -31,9 +31,8 @@ namespace MilsatInternAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InternId"), 1L, 1);
 
-                    b.Property<string>("Department")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Department")
+                        .HasColumnType("int");
 
                     b.Property<int>("MentorId")
                         .HasColumnType("int");
@@ -57,17 +56,63 @@ namespace MilsatInternAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MentorId"), 1L, 1);
 
-                    b.Property<string>("Department")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Department")
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.HasKey("MentorId");
 
                     b.ToTable("Mentor");
+
+                    b.HasData(
+                        new
+                        {
+                            MentorId = 1,
+                            Department = 1,
+                            Name = "Sodiq Agboola",
+                            Status = 0
+                        },
+                        new
+                        {
+                            MentorId = 2,
+                            Department = 4,
+                            Name = "Emmanuel Victor",
+                            Status = 0
+                        },
+                        new
+                        {
+                            MentorId = 3,
+                            Department = 3,
+                            Name = "Meenat Victoria",
+                            Status = 0
+                        },
+                        new
+                        {
+                            MentorId = 4,
+                            Department = 5,
+                            Name = "Ayodeji Smart",
+                            Status = 0
+                        },
+                        new
+                        {
+                            MentorId = 5,
+                            Department = 0,
+                            Name = "Michael Smith",
+                            Status = 0
+                        },
+                        new
+                        {
+                            MentorId = 6,
+                            Department = 2,
+                            Name = "Elon Musk",
+                            Status = 0
+                        });
                 });
 
             modelBuilder.Entity("MilsatInternAPI.Models.Intern", b =>

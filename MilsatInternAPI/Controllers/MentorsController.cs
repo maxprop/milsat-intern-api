@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MilsatInternAPI.Data;
 using MilsatInternAPI.Models;
+using MilsatInternAPI.ViewModels.Mentors;
+
 
 namespace MilsatInternAPI.Controllers
 {
@@ -40,7 +42,8 @@ namespace MilsatInternAPI.Controllers
           {
               return NotFound();
           }
-            var mentor = await _context.Mentor.FindAsync(id);
+            var mentor = await _context.Mentor.Include(intern => intern.Interns).FirstOrDefaultAsync(mentor => mentor.MentorId == id);
+
 
             if (mentor == null)
             {
@@ -84,13 +87,20 @@ namespace MilsatInternAPI.Controllers
         // POST: api/Mentors
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("AddMentor")]
-        public async Task<ActionResult<Mentor>> PostMentor(Mentor mentor)
+        public async Task<ActionResult<CreateMentorVm>> PostMentor(CreateMentorVm mentor)
         {
-          if (_context.Mentor == null)
-          {
-              return Problem("Entity set 'MilsatInternAPIContext.Mentor'  is null.");
-          }
-            _context.Mentor.Add(mentor);
+            if (_context.Mentor == null)
+            {
+                return Problem("Entity set 'MilsatInternAPIContext.Mentor'  is null.");
+            }
+
+            Mentor _singleMentor = new Mentor {
+                                            MentorId = mentor.MentorId,
+                                            Name = mentor.Name ,
+                                            Department = mentor.Department,
+            };
+
+            _context.Mentor.Add(_singleMentor);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetMentor", new { id = mentor.MentorId }, mentor);

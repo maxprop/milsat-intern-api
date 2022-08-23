@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MilsatInternAPI.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace MilsatInternAPI.ViewModels.Interns
 {
@@ -7,6 +8,6 @@ namespace MilsatInternAPI.ViewModels.Interns
         [Required]
         [Range(minimum: 1, maximum: int.MaxValue)]
         public int Id { get; set; }
-        public string Department { get; set; }
+        public DepartmentType Department { get; set; }
     }
 }
