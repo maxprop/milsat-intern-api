@@ -11,3 +11,4 @@ namespace MilsatInternAPI.ViewModels.Interns
         public string MentorName { get; set; }
     }
 }
+    

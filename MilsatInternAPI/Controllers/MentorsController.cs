@@ -96,34 +96,31 @@ namespace MilsatInternAPI.Controllers
 
         // PUT: api/Mentors/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("UpdateMentor/{id}")]
-        public async Task<IActionResult> PutMentor(int id, Mentor mentor)
-        {
-            if (id != mentor.MentorId)
-            {
-                return BadRequest();
-            }
+        //[HttpPut("UpdateMentor/")]
+        //public async Task<IActionResult> PutMentor(UpdateMentorVm mentor)
+        //{
+        //    var singleMentor = await _context.Mentor.Where(x => x.MentorId == mentor.MentorId)
+        //                                            .FirstOrDefaultAsync();
 
-            _context.Entry(mentor).State = EntityState.Modified;
+        //    if (mentor.Department == singleMentor.Department)
+        //    {
+        //        return BadRequest("No change found");
+        //    }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MentorExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+        //    singleMentor.Department = mentor.Department;
+        //    _context.Entry(singleMentor).State = EntityState.Modified;
 
-            return NoContent();
-        }
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //        return Ok("Update Successful");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return NoContent();
+        //    }
+            
+        //}
 
         // POST: api/Mentors
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

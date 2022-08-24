@@ -4,7 +4,7 @@
 
 namespace MilsatInternAPI.Migrations
 {
-    public partial class setup : Migration
+    public partial class fresh : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -31,7 +31,7 @@ namespace MilsatInternAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Department = table.Column<int>(type: "int", nullable: false),
-                    MentorId = table.Column<int>(type: "int", nullable: false)
+                    MentorId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -40,8 +40,20 @@ namespace MilsatInternAPI.Migrations
                         name: "FK_Intern_Mentor_MentorId",
                         column: x => x.MentorId,
                         principalTable: "Mentor",
-                        principalColumn: "MentorId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "MentorId");
+                });
+
+            migrationBuilder.InsertData(
+                table: "Mentor",
+                columns: new[] { "MentorId", "Department", "Name", "Status" },
+                values: new object[,]
+                {
+                    { 1, 1, "Sodiq Agboola", 0 },
+                    { 2, 4, "Emmanuel Victor", 0 },
+                    { 3, 3, "Meenat Victoria", 0 },
+                    { 4, 5, "Ayodeji Smart", 0 },
+                    { 5, 0, "Michael Smith", 0 },
+                    { 6, 2, "Elon Musk", 0 }
                 });
 
             migrationBuilder.CreateIndex(

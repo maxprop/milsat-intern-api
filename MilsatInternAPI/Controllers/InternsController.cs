@@ -235,7 +235,7 @@ namespace MilsatInternAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Ok("Interns Asdded Successfully");
+                return Ok("Interns Added Successfully");
             }
             catch (Exception ex)
             {
