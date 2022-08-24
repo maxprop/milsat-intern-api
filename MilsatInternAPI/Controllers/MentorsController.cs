@@ -25,32 +25,73 @@ namespace MilsatInternAPI.Controllers
 
         // GET: api/Mentors
         [HttpGet("GetAllMentors")]
-        public async Task<ActionResult<IEnumerable<Mentor>>> GetMentor()
+        public async Task<ActionResult<IEnumerable<MentorDTO>>> GetMentor(int pageNumber = 1, int pageSize = 15)
         {
-          if (_context.Mentor == null)
-          {
-              return NotFound();
-          }
-            return await _context.Mentor.ToListAsync();
+            if (_context.Mentor == null)
+            {
+                return NotFound();
+            }
+            var pagedData = await _context.Mentor.Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Include(_intern => _intern.Interns)
+                .ToListAsync();
+
+            List<MentorDTO> result = new List<MentorDTO>();
+            foreach (Mentor data in pagedData)
+            {
+                var interns = new List<MentorInternDTO> { };
+                foreach (Intern _intern in data.Interns)
+                {
+                    MentorInternDTO mentorInternDTO = new MentorInternDTO
+                    {
+                        InternId = _intern.InternId,
+                        Name = _intern.Name
+                    };
+                    interns.Add(mentorInternDTO);
+                }
+
+                var single_mentor = new MentorDTO
+                {
+                    MentorId = data.MentorId,
+                    Name = data.Name,
+                    Department = data.Department,
+                    Status = data.Status,
+                    Interns = interns
+                };
+
+                result.Add(single_mentor);
+            }
+            return result;
         }
 
         // GET: api/Mentors/5
         [HttpGet("GetMentor/{id}")]
-        public async Task<ActionResult<Mentor>> GetMentor(int id)
+        public async Task<ActionResult<MentorDTO>> GetMentor(int id)
         {
           if (_context.Mentor == null)
           {
               return NotFound();
           }
-            var mentor = await _context.Mentor.Include(intern => intern.Interns).FirstOrDefaultAsync(mentor => mentor.MentorId == id);
+            var mentor = await _context.Mentor.Include(mentor => mentor.Interns)
+                                              .FirstOrDefaultAsync(mentor => mentor.MentorId == id);
+            if (mentor == null) { return NotFound(); }
 
-
-            if (mentor == null)
+            var interns = new List<MentorInternDTO> { };
+            foreach (Intern _intern in mentor.Interns)
             {
-                return NotFound();
+                MentorInternDTO mentorInternDTO = new MentorInternDTO {
+                    InternId = _intern.InternId,
+                    Name = _intern.Name };
+                interns.Add(mentorInternDTO);
             }
 
-            return mentor;
+            var single_mentor = new MentorDTO {
+                MentorId = mentor.MentorId, Name = mentor.Name, 
+                Department = mentor.Department,
+                Status = mentor.Status,
+                Interns = interns
+            };
+            return single_mentor;
         }
 
         // PUT: api/Mentors/5

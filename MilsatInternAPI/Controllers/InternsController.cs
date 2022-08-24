@@ -184,6 +184,7 @@ namespace MilsatInternAPI.Controllers
 
                     var selector = PickMentor(totalAvailableMentors);
                     var mentor = availableMentors[selector];
+                    mentor.Status = mentor.Interns == null || mentor.Interns.Count() < 4 ? MentorStatus.Free : MentorStatus.Occupied;
                     singleIntern.Mentor = mentor;
                 }
 
@@ -197,7 +198,6 @@ namespace MilsatInternAPI.Controllers
             {
                 _logger.LogError($"Error occured while Updating Intern. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
                 return NotFound("Something went wrong");
-
             }
         }
 
@@ -227,6 +227,7 @@ namespace MilsatInternAPI.Controllers
 
                     var selector = PickMentor(totalAvailableMentors);
                     var mentor = availableMentors[selector];
+                    mentor.Status = mentor.Interns == null || mentor.Interns.Count() < 4 ? MentorStatus.Free : MentorStatus.Occupied;
                     singleIntern.Mentor = mentor;
 
                     _context.Intern.Add(singleIntern);
@@ -258,7 +259,7 @@ namespace MilsatInternAPI.Controllers
                 if (intern == null)
                 {
                     return NotFound();
-                }
+                } 
 
                 _context.Intern.Remove(intern);
                 await _context.SaveChangesAsync();

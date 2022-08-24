@@ -14,7 +14,6 @@ try
         options.UseSqlServer(builder.Configuration.GetConnectionString("MilsatInternAPIContext") ?? throw new InvalidOperationException("Connection string 'MilsatInternAPIContext' not found.")));
 
     // Add services to the container.
-    builder.Services.AddScoped<MilsatInternAPIContext>();
     builder.Services.AddControllers();
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();

@@ -7,6 +7,6 @@ namespace MilsatInternAPI.Models
         public int InternId { get; set; }
         public string Name { get; set; }
         public DepartmentType Department { get; set; }
-        public Mentor Mentor { get; set; }
+        public Mentor? Mentor { get; set; }
     }
 }

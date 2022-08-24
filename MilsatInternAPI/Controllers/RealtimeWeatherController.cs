@@ -12,16 +12,26 @@ namespace MilsatInternAPI.Controllers
     [Route("api/[controller]")]
     public class RealtimeWeatherController : ControllerBase
     {
-        private static readonly string KEY = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("token")["weatherKey"].ToString();
+        private readonly IConfiguration _iconfig;
+        private readonly ILogger<RealtimeWeatherController> _logger;
+
+        public RealtimeWeatherController(IConfiguration iconfig, ILogger<RealtimeWeatherController> logger)
+        {
+            _iconfig = iconfig;
+            _logger = logger;
+        }
 
         [HttpGet("[action]/{city}")]
         public async Task<IActionResult> City(string city)
         {
             using (var client = new HttpClient())
             {
+                _logger.LogInformation($"Received request to fetch weather data of Request: {city}");
                 try
                 {
-                    client.BaseAddress = new Uri("http://api.openweathermap.org");
+                    var KEY = _iconfig["token:weatherKey"];
+                    var baseAddress = _iconfig["token:baseAddress"];
+                    client.BaseAddress = new Uri(baseAddress);
                     var response = await client.GetAsync($"/data/2.5/weather?q={city}&appid={KEY}&units=metric");
                     response.EnsureSuccessStatusCode();
 
@@ -36,6 +46,7 @@ namespace MilsatInternAPI.Controllers
                 }
                 catch (HttpRequestException httpRequestException)
                 {
+                    _logger.LogError($"Error getting weather data,  Message:{httpRequestException.Message}, Stacktrace:{httpRequestException.StackTrace}");
                     return BadRequest($"Error getting weather from OpenWeather: {httpRequestException.Message}");
                 }
             }
