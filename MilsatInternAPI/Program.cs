@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MilsatInternAPI.Data;
+using MilsatInternAPI.Interfaces;
+using MilsatInternAPI.Repositories;
+using MilsatInternAPI.Services;
 using NLog;
 using NLog.Web;
 
@@ -20,6 +23,8 @@ try
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
+    builder.Services.AddScoped(typeof(IAsyncRepository<>), typeof(EfRepository<>));
+    builder.Services.AddScoped<IInternService, InternService>();
 
     var app = builder.Build();
 
