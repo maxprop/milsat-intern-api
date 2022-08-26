@@ -25,6 +25,7 @@ try
     builder.Services.AddSwaggerGen();
     builder.Services.AddScoped(typeof(IAsyncRepository<>), typeof(EfRepository<>));
     builder.Services.AddScoped<IInternService, InternService>();
+    builder.Services.AddScoped<IMentorService, MentorService>();
 
     var app = builder.Build();
 

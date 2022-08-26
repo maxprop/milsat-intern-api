@@ -1,8 +1,8 @@
 ﻿using MilsatInternAPI.Enums;
 
-namespace MilsatInternAPI.ViewModels.Interns
+namespace MilsatInternAPI.ViewModels.Mentors
 {
-    public class GetInternVm
+    public class GetMentorVm
     {
         public int? id { get; set; }
         public string? name { get; set; }

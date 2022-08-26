@@ -24,7 +24,7 @@ namespace MilsatInternAPI.Services
 
         public async Task<GenericResponse<List<InternDTO>>> AddIntern(List<CreateInternVm> vm)
         {
-            _logger.LogInformation($"Received a request to create new Intern(s): Request:{JsonConvert.SerializeObject(vm)}");
+            _logger.LogInformation($"Received a request to add new Intern(s): Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
                 var interns = new List<Intern>();
