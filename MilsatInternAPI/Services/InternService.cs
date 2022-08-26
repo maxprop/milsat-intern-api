@@ -57,17 +57,6 @@ namespace MilsatInternAPI.Services
             }
         }
 
-
-        public async Task<Mentor> SelectMentor(DepartmentType department)
-        {
-            var availableMentors = await _Mentor.GetAll().Where(x => x.Department == department).ToListAsync();
-            int totalAvailableMentors = availableMentors.Count();
-            Random random = new Random();
-            var mentor_idx = random.Next(totalAvailableMentors);
-            var mentor = availableMentors[mentor_idx];
-            return mentor;
-        }
-
         public async Task<GenericResponse<List<InternDTO>>> GetAllInterns(int pageNumber, int pageSize)
         {
             _logger.LogInformation($"Received a request to fetch paginated Intern(s): Request: pageNumber:{pageNumber}, pageSize:{pageSize}");
@@ -126,7 +115,8 @@ namespace MilsatInternAPI.Services
 
                     var entity = new InternDTO {
                         InternId = intern.InternId, Name = intern.Name,
-                        Department = intern.Department, MentorName = intern.Mentor.Name };
+                        Department = intern.Department, MentorName = intern.Mentor == null ? null : intern.Mentor.Name,
+                    };
                     List<InternDTO> collectedIntern = new List<InternDTO> { entity };
                     return new GenericResponse<List<InternDTO>>
                     {
@@ -193,13 +183,10 @@ namespace MilsatInternAPI.Services
                     };
                 }
 
-                if (vm.Department != intern.Department)
-                {
-                    intern.Department = vm.Department;
-                    intern.Mentor = await SelectMentor(vm.Department);
+                intern.Department = vm.Department;
+                intern.Mentor = await SelectMentor(vm.Department);
 
-                    await _Intern.UpdateAsync(intern);
-                }
+                await _Intern.UpdateAsync(intern);
                 var updatedIntern = new InternDTO
                 {
                     InternId = intern.InternId, Name = intern.Name,
@@ -256,6 +243,21 @@ namespace MilsatInternAPI.Services
             }
         }
 
+
+        public async Task<Mentor> SelectMentor(DepartmentType department)
+        {
+            var availableMentors = await _Mentor.GetAll().Where(x => x.Department == department).ToListAsync();
+            int totalAvailableMentors = availableMentors.Count();
+            if (totalAvailableMentors < 1)
+            {
+                return null;
+            }
+            Random random = new Random();
+            var mentor_idx = random.Next(totalAvailableMentors);
+            var mentor = availableMentors[mentor_idx];
+            return mentor;
+        }
+
         public List<InternDTO> InternResponseData(List<Intern> source)
         {
             List<InternDTO> interns = new();
@@ -266,7 +268,7 @@ namespace MilsatInternAPI.Services
                     InternId = intern.InternId,
                     Name = intern.Name,
                     Department = intern.Department,
-                    MentorName = intern.Mentor.Name
+                    MentorName = intern.Mentor == null ? null : intern.Mentor.Name,
                 });
             };
             return interns;

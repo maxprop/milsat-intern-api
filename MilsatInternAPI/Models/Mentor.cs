@@ -9,6 +9,6 @@ namespace MilsatInternAPI.Models
         public DepartmentType Department { get; set; }
         public MentorStatus Status { get; set; }
 
-        public ICollection<Intern> Interns { get; set; }
+        public List<Intern> Interns { get; set; }
     }
 }

@@ -152,7 +152,7 @@ namespace MilsatInternAPI.Services
             _logger.LogInformation($"Received a request to update Mentor: Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                var mentor = await _Mentor.GetAll().Where(x => x.MentorId == vm.MentorId).FirstOrDefaultAsync();
+                var mentor = await _Mentor.GetAll().Include(x => x.Interns).Where(x => x.MentorId == vm.MentorId).FirstOrDefaultAsync();
 
                 if (mentor == null)
                 {
@@ -162,14 +162,18 @@ namespace MilsatInternAPI.Services
                         ResponseCode = ResponseCode.NotFound
                     };
                 }
-
                 if (vm.Department != mentor.Department)
                 {
                     mentor.Department = vm.Department;
-                    mentor.Interns = new List<Intern>();
+                    foreach (var intern in mentor.Interns)
+                    {
+                        intern.Mentor = null;
+                    }
+                    //mentor.Interns = new List<Intern> { };
 
                     await _Mentor.UpdateAsync(mentor);
                 }
+
                 var updatedIntern = new MentorDTO
                 {
                     MentorId = mentor.MentorId,

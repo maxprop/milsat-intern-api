@@ -21,8 +21,6 @@ namespace MilsatInternAPI.Controllers
     public class InternsController : ControllerBase
     {
         private readonly IInternService _internService;
-        private readonly MilsatInternAPIContext _context;
-
         public InternsController(IInternService service)
         {
             _internService = service;
@@ -55,7 +53,6 @@ namespace MilsatInternAPI.Controllers
 
 
         // PUT: api/Interns/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("UpdateIntern")]
         public async Task<ActionResult<InternDTO>> PutIntern(UpdateInternVm intern)
         {
@@ -69,7 +66,6 @@ namespace MilsatInternAPI.Controllers
 
 
         // POST: api/Interns
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("AddIntern")]
         public async Task<ActionResult<InternDTO>> PostIntern(List<CreateInternVm> intern)
         {
