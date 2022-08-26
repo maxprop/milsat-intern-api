@@ -12,7 +12,6 @@ namespace MilsatInternAPI.Services
     {
         private readonly ILogger<MentorService> _logger;
         private readonly IAsyncRepository<Mentor> _Mentor;
-        private readonly IAsyncRepository<Intern> _Interns;
         public MentorService(IAsyncRepository<Mentor> mentorRepo, ILogger<MentorService> logger)
         {
             _Mentor = mentorRepo;
