@@ -4,7 +4,7 @@ namespace MilsatInternAPI.ViewModels.Mentors
 {
     public class UpdateMentorVm
     {
-        public int MentorId { get; set; }
+        public string MentorId { get; set; }
         public DepartmentType Department { get; set; }
     }
 }

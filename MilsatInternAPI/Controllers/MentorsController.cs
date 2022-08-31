@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // GET: api/Mentors
-        [HttpGet("GetAllMentors")]
+        [HttpGet("GetAllMentors"), Authorize(Roles = "Admin,Mentor")]
         public async Task<ActionResult<List<MentorDTO>>> GetMentor(int pageNumber = 1, int pageSize = 15)
         {
             var result = await _mentorService.GetAllMentors(pageNumber, pageSize);
@@ -39,7 +40,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // GET: api/Mentors/5
-        [HttpGet("GetMentor/{id}")]
+        [HttpGet("GetMentor"), Authorize(Roles = "Admin,Mentor")]
         public async Task<ActionResult<MentorDTO>> GetMentor([FromQuery] GetMentorVm vm)
         {
             var result = await _mentorService.GetMentors(vm);
@@ -52,7 +53,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // PUT: api/Mentors/5
-        [HttpPut("UpdateMentor")]
+        [HttpPut("UpdateMentor"), Authorize(Roles = "Admin")]
         public async Task<ActionResult<MentorDTO>> PutMentor(UpdateMentorVm mentor)
         {
             var result = await _mentorService.UpdateMentor(mentor);
@@ -64,23 +65,9 @@ namespace MilsatInternAPI.Controllers
         }
 
 
-        // POST: api/Mentors
-        [HttpPost("AddMentor")]
-        public async Task<ActionResult<List<MentorDTO>>> PostMentor(List<CreateMentorVm> mentors)
-        {
-            var result = await _mentorService.AddMentor(mentors);
-            if (!result.IsSuccessful)
-            {
-                return BadRequest(result);
-            }
-            return Ok(result);
-
-        }
-
-
         // DELETE: api/Mentors/5
-        [HttpDelete("RemoveMentor/{id}")]
-        public async Task<IActionResult> DeleteMentor(int id)
+        [HttpDelete("RemoveMentor/{id}"), Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteMentor(Guid id)
         {
             var result = await _mentorService.RemoveMentor(id);
             if (!result.IsSuccessful)

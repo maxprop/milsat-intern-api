@@ -12,10 +12,13 @@ namespace MilsatInternAPI.Services
     {
         private readonly ILogger<MentorService> _logger;
         private readonly IAsyncRepository<Mentor> _Mentor;
-        public MentorService(IAsyncRepository<Mentor> mentorRepo, ILogger<MentorService> logger)
+        private readonly IAuthentication _authService;
+        public MentorService(IAsyncRepository<Mentor> mentorRepo,
+            ILogger<MentorService> logger, IAuthentication authService)
         {
             _Mentor = mentorRepo;
             _logger = logger;
+            _authService = authService;
         }
 
         public async Task<GenericResponse<List<MentorDTO>>> AddMentor(List<CreateMentorVm> vm)
@@ -24,9 +27,15 @@ namespace MilsatInternAPI.Services
             try
             {
                 var mentors = new List<Mentor>();
-                foreach (CreateMentorVm intern in vm)
+                foreach (CreateMentorVm mentor in vm)
                 {
-                    var singleMentor = new Mentor { Name = intern.Name, Department = intern.Department };
+                    var newUser = new User { Email = mentor.Email };
+                    newUser = _authService.RegisterPassword(newUser, mentor.PhoneNumber);
+                    var singleMentor = new Mentor { 
+                        FirstName = mentor.FirstName, LastName = mentor.LastName,
+                        Department = mentor.Department, CreatedOn = DateTime.Now,
+                        PhoneNumber = mentor.PhoneNumber};
+                    singleMentor.User = newUser;
                     mentors.Add(singleMentor);
                 }
                 await _Mentor.AddRangeAsync(mentors);
@@ -55,7 +64,8 @@ namespace MilsatInternAPI.Services
         {
             try
             {
-                var pagedData = await _Mentor.GetAll().Include(x => x.Interns).Skip((pageNumber - 1) * pageSize)
+                var pagedData = await _Mentor.GetAll().Include(x => x.Interns)
+                                                      .Skip((pageNumber - 1) * pageSize)
                                                       .Take(pageSize).ToListAsync();
                 var collectedMentors = MentorResponseData(pagedData);
                 return new GenericResponse<List<MentorDTO>>
@@ -92,7 +102,8 @@ namespace MilsatInternAPI.Services
             {
                 if (vm.id != null) {
                     var mentor = await _Mentor.GetAll().Include(mentor => mentor.Interns)
-                                                       .Where(X => X.MentorId == vm.id).FirstOrDefaultAsync();
+                                                       .Where(x => x.MentorId == vm.id)
+                                                       .FirstOrDefaultAsync();
 
                     if (mentor == null)
                     {
@@ -114,7 +125,10 @@ namespace MilsatInternAPI.Services
                 }
                 else if (vm.name != null && vm.department == null)
                 {
-                    var interns = await _Mentor.GetAll().Include(x => x.Interns).Where(x => x.Name.Contains(vm.name)).ToListAsync();
+                    var interns = await _Mentor.GetAll()
+                        .Include(x => x.Interns)
+                        .Where(x => x.FirstName.Contains(vm.name) || x.LastName.Contains(vm.name))
+                        .ToListAsync();
                     var collectedInterns = MentorResponseData(interns);
                     return new GenericResponse<List<MentorDTO>>
                     {
@@ -152,7 +166,10 @@ namespace MilsatInternAPI.Services
             _logger.LogInformation($"Received a request to update Mentor: Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                var mentor = await _Mentor.GetAll().Include(x => x.Interns).Where(x => x.MentorId == vm.MentorId).FirstOrDefaultAsync();
+                var mentor = await _Mentor.GetAll()
+                    .Include(x => x.Interns)
+                    .Where(x => x.MentorId.ToString() == vm.MentorId)
+                    .FirstOrDefaultAsync();
 
                 if (mentor == null)
                 {
@@ -177,7 +194,8 @@ namespace MilsatInternAPI.Services
                 var updatedIntern = new MentorDTO
                 {
                     MentorId = mentor.MentorId,
-                    Name = mentor.Name,
+                    FirstName = mentor.FirstName,
+                    LastName = mentor.FirstName,
                     Department = mentor.Department,
                     Interns = new List<MentorInternDTO>()
                 };
@@ -199,7 +217,7 @@ namespace MilsatInternAPI.Services
             }
         }
 
-        public async Task<GenericResponse<MentorDTO>> RemoveMentor(int id)
+        public async Task<GenericResponse<MentorDTO>> RemoveMentor(Guid id)
         {
             _logger.LogInformation($"Received a request to delete an Mentor: Request(mentor id):{id}");
             try
@@ -241,7 +259,8 @@ namespace MilsatInternAPI.Services
                 mentors.Add(new MentorDTO
                 {
                     MentorId = mentor.MentorId,
-                    Name = mentor.Name,
+                    FirstName = mentor.FirstName,
+                    LastName = mentor.LastName,
                     Department = mentor.Department,
                     Interns = interns
                 });
@@ -257,7 +276,7 @@ namespace MilsatInternAPI.Services
                 interns.Add(new MentorInternDTO
                 {
                     InternId = intern.InternId,
-                    Name = intern.Name,
+                    Name = intern.FirstName,
                 });
             }
             return interns;

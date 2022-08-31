@@ -5,17 +5,18 @@ namespace MilsatInternAPI.ViewModels.Mentors
 {
     public class MentorDTO
     {
-        public int MentorId { get; set; }
-        public string Name { get; set; }
+        public Guid MentorId { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
         public DepartmentType Department { get; set; }
-        public MentorStatus Status { get; set; }
+        //public MentorStatus Status { get; set; }
 
         public List<MentorInternDTO> Interns { get; set; }
     }
 
     public class MentorInternDTO
     {
-        public int InternId { get; set; }
+        public Guid InternId { get; set; }
         public string Name { get; set; }
     }
 }

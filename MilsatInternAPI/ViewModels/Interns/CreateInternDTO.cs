@@ -1,8 +1,8 @@
 ﻿using MilsatInternAPI.Enums;
 
-namespace MilsatInternAPI.ViewModels.Mentors
+namespace MilsatInternAPI.ViewModels.Interns
 {
-    public class CreateMentorVm
+    public class CreateInternDTO
     {
         public string Email { get; set; }
         public string FirstName { get; set; }
@@ -11,4 +11,3 @@ namespace MilsatInternAPI.ViewModels.Mentors
         public DepartmentType Department { get; set; }
     }
 }
-

@@ -2,10 +2,11 @@
 
 namespace MilsatInternAPI.ViewModels.Interns
 {
-    public class InternDTO
+    public class InternResponseDTO
     {
-        public int InternId { get; set; }
-        public string Name { get; set; }
+        public Guid InternId { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
         public DepartmentType Department { get; set; }
         public string MentorName { get; set; }
     }

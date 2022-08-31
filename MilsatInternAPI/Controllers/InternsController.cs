@@ -13,6 +13,7 @@ using MilsatInternAPI.Models;
 using MilsatInternAPI.Enums;
 using MilsatInternAPI.Interfaces;
 using MilsatInternAPI.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MilsatInternAPI.Controllers
 {
@@ -28,8 +29,8 @@ namespace MilsatInternAPI.Controllers
 
 
         // GET: api/Interns
-        [HttpGet("GetAllInterns")]
-        public async Task<ActionResult<List<InternDTO>>> GetIntern(int pageNumber = 1, int pageSize = 15)
+        [HttpGet("GetAllInterns"), Authorize]
+        public async Task<ActionResult<List<InternResponseDTO>>> GetIntern(int pageNumber = 1, int pageSize = 15)
         {
             var result = await _internService.GetAllInterns(pageNumber, pageSize);
             if (!result.IsSuccessful)
@@ -40,8 +41,8 @@ namespace MilsatInternAPI.Controllers
         }
 
 
-        [HttpGet("GetIntern/")]
-        public async Task<ActionResult<List<InternDTO>>> GetIntern([FromQuery] GetInternVm model)
+        [HttpGet("GetIntern/"), Authorize]
+        public async Task<ActionResult<List<InternResponseDTO>>> GetIntern([FromQuery] GetInternVm model)
         {
             var result = await _internService.GetInterns(model);
             if (!result.IsSuccessful)
@@ -53,8 +54,8 @@ namespace MilsatInternAPI.Controllers
 
 
         // PUT: api/Interns/5
-        [HttpPut("UpdateIntern")]
-        public async Task<ActionResult<InternDTO>> PutIntern(UpdateInternVm intern)
+        [HttpPut("UpdateIntern"), Authorize(Roles = "Admin")]
+        public async Task<ActionResult<InternResponseDTO>> PutIntern(UpdateInternVm intern)
         {
             var result = await _internService.UpdateIntern(intern);
             if (!result.IsSuccessful)
@@ -65,23 +66,9 @@ namespace MilsatInternAPI.Controllers
         }
 
 
-        // POST: api/Interns
-        [HttpPost("AddIntern")]
-        public async Task<ActionResult<InternDTO>> PostIntern(List<CreateInternVm> intern)
-        {
-
-            var result = await _internService.AddIntern(intern);
-            if (!result.IsSuccessful)
-            {
-                return BadRequest(result);
-            }
-            return Ok(result);
-        }
-
-
         // DELETE: api/Interns/5
-        [HttpDelete("RemoveIntern")]
-        public async Task<IActionResult> DeleteIntern(int id)
+        [HttpDelete("RemoveIntern"), Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteIntern(Guid id)
         {
             var result = await _internService.RemoveIntern(id);
             if (!result.IsSuccessful)

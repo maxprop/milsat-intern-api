@@ -7,7 +7,7 @@
         Task<T> UpdateAsync(T entity, T entityFromDatabase = null, bool saveChanges = true);
         Task UpdateRangeAsync(IEnumerable<T> entities);
         Task DeleteAsync(T entity);
-        Task<T> GetByIdAsync(int id);
+        Task<T> GetByIdAsync(Guid id);
         IQueryable<T> GetAll();
 
     }
