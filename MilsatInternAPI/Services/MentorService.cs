@@ -195,7 +195,7 @@ namespace MilsatInternAPI.Services
                 {
                     MentorId = mentor.MentorId,
                     FirstName = mentor.FirstName,
-                    LastName = mentor.FirstName,
+                    LastName = mentor.LastName,
                     Department = mentor.Department,
                     Interns = new List<MentorInternDTO>()
                 };
