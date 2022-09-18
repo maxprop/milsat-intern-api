@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MilsatInternAPI.Data;
+using MilsatInternAPI.Enums;
 using MilsatInternAPI.Interfaces;
 using MilsatInternAPI.Models;
 using MilsatInternAPI.ViewModels;
@@ -11,29 +12,31 @@ using System.Security.Cryptography;
 
 namespace MilsatInternAPI.Services
 {
-    public class AuthenticationService : IAuthentication
+    public class AuthService : IAuthentication
     {
         private readonly IConfiguration _configuration;
         private readonly IAsyncRepository<User> _User;
-        private readonly ILogger<AuthenticationService> _logger;
+        private readonly ILogger<AuthService> _logger;
         private readonly IHttpContextAccessor _httpContext;
 
-        public AuthenticationService(
+        public AuthService(
             IConfiguration configuration, IAsyncRepository<User> user,
-            ILogger<AuthenticationService> logger, IHttpContextAccessor httpContext)
+            ILogger<AuthService> logger, IHttpContextAccessor httpContext)
         {
             _configuration = configuration;
             _logger = logger;
             _User = user;
             _httpContext = httpContext;
         }
-        public async Task<AuthResponseDTO> Login(UserDTO request)
+        public async Task<AuthResponseDTO> Login(UserLoginDTO request)
         {
             var user = await _User.GetAll().Where(x => x.Email == request.Email).FirstOrDefaultAsync();
             if (user == null)
             {
                 return new AuthResponseDTO()
                 {
+                    Success = false,
+                    responseCode = ResponseCode.NotFound,
                     Message = "Either the email or password is incorrect"
                 };
             }
@@ -41,6 +44,8 @@ namespace MilsatInternAPI.Services
             {
                 return new AuthResponseDTO()
                 {
+                    Success = false,
+                    responseCode = ResponseCode.INVALID_REQUEST,
                     Message = "Either the email or password is incorrect"
                 };
             }
@@ -50,6 +55,7 @@ namespace MilsatInternAPI.Services
 
             return new AuthResponseDTO {
                 Success = true,
+                responseCode = ResponseCode.Successful,
                 Token = token,
                 RefreshToken = refreshToken.Token,
                 TokenExpires = refreshToken.Expires
@@ -114,7 +120,7 @@ namespace MilsatInternAPI.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
             };
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(

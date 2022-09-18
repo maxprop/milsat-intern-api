@@ -23,7 +23,7 @@ namespace MilsatInternAPI.Controllers
         }
 
         [HttpPost("Login")]
-        public async Task<ActionResult<AuthResponseDTO>> Login(UserDTO request)
+        public async Task<ActionResult<AuthResponseDTO>> Login(UserLoginDTO request)
         {
             var result = await _authService.Login(request);
             if (!result.Success)
@@ -34,10 +34,10 @@ namespace MilsatInternAPI.Controllers
         }
 
         [HttpPost("RegisterIntern"), Authorize(Roles = "Admin")]
-        public async Task<ActionResult<InternResponseDTO>> RegisterIntern(List<CreateInternDTO> intern) 
+        public async Task<ActionResult<InternResponseDTO>> RegisterIntern(CreateInternDTO intern) 
         {
             var result = await _internService.AddIntern(intern);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }
@@ -48,7 +48,7 @@ namespace MilsatInternAPI.Controllers
         public async Task<ActionResult<InternResponseDTO>> RegisterMentor(List<CreateMentorVm> mentor)
         {
             var result = await _mentorService.AddMentor(mentor);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }

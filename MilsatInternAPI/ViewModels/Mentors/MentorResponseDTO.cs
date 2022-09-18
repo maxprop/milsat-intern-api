@@ -3,7 +3,7 @@ using MilsatInternAPI.Models;
 
 namespace MilsatInternAPI.ViewModels.Mentors
 {
-    public class MentorDTO
+    public class MentorResponseDTO
     {
         public Guid MentorId { get; set; }
         public string FirstName { get; set; }
@@ -11,7 +11,7 @@ namespace MilsatInternAPI.ViewModels.Mentors
         public DepartmentType Department { get; set; }
         //public MentorStatus Status { get; set; }
 
-        public List<MentorInternDTO> Interns { get; set; }
+        public List<MentorInternDTO>? Interns { get; set; }
     }
 
     public class MentorInternDTO

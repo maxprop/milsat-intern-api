@@ -7,7 +7,7 @@ namespace MilsatInternAPI.Interfaces
     public interface IAuthentication
     {
         User RegisterPassword(User request, string phoneNumber);
-        Task<AuthResponseDTO> Login(UserDTO request);
+        Task<AuthResponseDTO> Login(UserLoginDTO request);
         Task<AuthResponseDTO> RefreshToken();
         //void SetRefreshToken(RefreshToken refreshToken, User user);
     }

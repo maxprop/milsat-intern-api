@@ -15,6 +15,8 @@ namespace MilsatInternAPI.Enums
         [Description("Frontend")]
         Frontend,
         [Description("UIUX")]
-        UIUX
+        UIUX,
+        [Description("Staff")]
+        Staff
     }
 }

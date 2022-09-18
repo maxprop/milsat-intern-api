@@ -33,7 +33,7 @@ namespace MilsatInternAPI.Controllers
         public async Task<ActionResult<List<InternResponseDTO>>> GetIntern(int pageNumber = 1, int pageSize = 15)
         {
             var result = await _internService.GetAllInterns(pageNumber, pageSize);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }
@@ -45,7 +45,7 @@ namespace MilsatInternAPI.Controllers
         public async Task<ActionResult<List<InternResponseDTO>>> GetIntern([FromQuery] GetInternVm model)
         {
             var result = await _internService.GetInterns(model);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }
@@ -58,7 +58,7 @@ namespace MilsatInternAPI.Controllers
         public async Task<ActionResult<InternResponseDTO>> PutIntern(UpdateInternVm intern)
         {
             var result = await _internService.UpdateIntern(intern);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }
@@ -67,15 +67,15 @@ namespace MilsatInternAPI.Controllers
 
 
         // DELETE: api/Interns/5
-        [HttpDelete("RemoveIntern"), Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteIntern(Guid id)
-        {
-            var result = await _internService.RemoveIntern(id);
-            if (!result.IsSuccessful)
-            {
-                return BadRequest(result);
-            }
-            return Ok(result);
-        }
+        //[HttpDelete("RemoveIntern"), Authorize(Roles = "Admin")]
+        //public async Task<IActionResult> DeleteIntern(Guid id)
+        //{
+        //    var result = await _internService.RemoveIntern(id);
+        //    if (!result.Successful)
+        //    {
+        //        return BadRequest(result);
+        //    }
+        //    return Ok(result);
+        //}
     }
 }

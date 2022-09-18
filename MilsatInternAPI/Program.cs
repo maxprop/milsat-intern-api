@@ -54,7 +54,8 @@ try
     });
 
     builder.Services.AddScoped(typeof(IAsyncRepository<>), typeof(EfRepository<>));
-    builder.Services.AddScoped<IAuthentication, AuthenticationService>();
+    builder.Services.AddScoped<IAuthentication, AuthService>();
+    builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IInternService, InternService>();
     builder.Services.AddScoped<IMentorService, MentorService>();
 

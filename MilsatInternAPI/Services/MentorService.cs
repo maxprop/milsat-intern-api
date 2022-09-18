@@ -11,17 +11,20 @@ namespace MilsatInternAPI.Services
     public class MentorService : IMentorService
     {
         private readonly ILogger<MentorService> _logger;
-        private readonly IAsyncRepository<Mentor> _Mentor;
+        private readonly IAsyncRepository<User> _userRepo;
+        private readonly IAsyncRepository<Mentor> _mentorRepo;
         private readonly IAuthentication _authService;
         public MentorService(IAsyncRepository<Mentor> mentorRepo,
-            ILogger<MentorService> logger, IAuthentication authService)
+            ILogger<MentorService> logger, IAuthentication authService,
+            IAsyncRepository<User> userRepo)
         {
-            _Mentor = mentorRepo;
+            _mentorRepo = mentorRepo;
             _logger = logger;
             _authService = authService;
+            _userRepo = userRepo;
         }
 
-        public async Task<GenericResponse<List<MentorDTO>>> AddMentor(List<CreateMentorVm> vm)
+        public async Task<GenericResponse<List<MentorResponseDTO>>> AddMentor(List<CreateMentorVm> vm)
         {
             _logger.LogInformation($"Received a request to add new Mentor(s): Request:{JsonConvert.SerializeObject(vm)}");
             try
@@ -29,22 +32,24 @@ namespace MilsatInternAPI.Services
                 var mentors = new List<Mentor>();
                 foreach (CreateMentorVm mentor in vm)
                 {
-                    var newUser = new User { Email = mentor.Email };
+                    var newUser = new User { 
+                        Email = mentor.Email, FirstName = mentor.FirstName,
+                        PhoneNumber = mentor.PhoneNumber,
+                        LastName = mentor.LastName, Department = mentor.Department
+                    };
                     newUser = _authService.RegisterPassword(newUser, mentor.PhoneNumber);
-                    var singleMentor = new Mentor { 
-                        FirstName = mentor.FirstName, LastName = mentor.LastName,
-                        Department = mentor.Department, CreatedOn = DateTime.Now,
-                        PhoneNumber = mentor.PhoneNumber};
-                    singleMentor.User = newUser;
+                    await _userRepo.AddAsync(newUser);
+                    var singleMentor = new Mentor { UserId = newUser.UserId, Interns = new List<Intern>()};
+                    singleMentor.UserId = newUser.UserId;
                     mentors.Add(singleMentor);
                 }
-                await _Mentor.AddRangeAsync(mentors);
+                await _mentorRepo.AddRangeAsync(mentors);
 
                 //Crete response body
                 var newMentors = MentorResponseData(mentors);
-                return new GenericResponse<List<MentorDTO>>
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
-                    IsSuccessful = true,
+                    Successful = true,
                     ResponseCode = ResponseCode.Successful,
                     Data = newMentors
                 };
@@ -52,25 +57,27 @@ namespace MilsatInternAPI.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Error occured while Creating Intern. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
-                return new GenericResponse<List<MentorDTO>>
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
-                    IsSuccessful = false,
+                    Successful = false,
                     ResponseCode = ResponseCode.EXCEPTION_ERROR
                 };
             }
         }
 
-        public async Task<GenericResponse<List<MentorDTO>>> GetAllMentors(int pageNumber, int pageSize)
+        public async Task<GenericResponse<List<MentorResponseDTO>>> GetAllMentors(int pageNumber, int pageSize)
         {
             try
             {
-                var pagedData = await _Mentor.GetAll().Include(x => x.Interns)
+                var pagedData = await _mentorRepo.GetAll().Include(x => x.User)
+                                                      .Include(x => x.Interns)
+                                                        .ThenInclude(x => x.User)
                                                       .Skip((pageNumber - 1) * pageSize)
                                                       .Take(pageSize).ToListAsync();
                 var collectedMentors = MentorResponseData(pagedData);
-                return new GenericResponse<List<MentorDTO>>
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
-                    IsSuccessful = true,
+                    Successful = true,
                     ResponseCode = ResponseCode.Successful,
                     Data = collectedMentors
                 };
@@ -78,22 +85,22 @@ namespace MilsatInternAPI.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Exception occured while Fecthing Data Request. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
-                return new GenericResponse<List<MentorDTO>>
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
-                    IsSuccessful = false,
+                    Successful = false,
                     ResponseCode = ResponseCode.EXCEPTION_ERROR
                 };
             }
         }
 
-        public async Task<GenericResponse<List<MentorDTO>>> GetMentors(GetMentorVm vm)
+        public async Task<GenericResponse<List<MentorResponseDTO>>> GetMentors(GetMentorVm vm)
         {
             _logger.LogInformation($"Received a request to Fetch Intern(s): Request:{JsonConvert.SerializeObject(vm)}");
             if (vm.id == null && vm.name == null && vm.department == null)
             {
-                return new GenericResponse<List<MentorDTO>>
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
-                    IsSuccessful = false,
+                    Successful = false,
                     ResponseCode = ResponseCode.NotFound
                 };
             }
@@ -101,50 +108,50 @@ namespace MilsatInternAPI.Services
             try
             {
                 if (vm.id != null) {
-                    var mentor = await _Mentor.GetAll().Include(mentor => mentor.Interns)
+                    var mentor = await _mentorRepo.GetAll().Include(mentor => mentor.Interns)
                                                        .Where(x => x.MentorId == vm.id)
                                                        .FirstOrDefaultAsync();
 
                     if (mentor == null)
                     {
                         _logger.LogInformation($"Invalid ID Received: Request:{JsonConvert.SerializeObject(vm)}");
-                        return new GenericResponse<List<MentorDTO>>
+                        return new GenericResponse<List<MentorResponseDTO>>
                         {
-                            IsSuccessful = false,
+                            Successful = false,
                             ResponseCode = ResponseCode.NotFound
                         };
                     }
 
                     var collectedMentor = MentorResponseData(new List<Mentor> { mentor });
-                    return new GenericResponse<List<MentorDTO>>
+                    return new GenericResponse<List<MentorResponseDTO>>
                     {
-                        IsSuccessful = true,
+                        Successful = true,
                         ResponseCode = ResponseCode.Successful,
                         Data = collectedMentor
                     };
                 }
                 else if (vm.name != null && vm.department == null)
                 {
-                    var interns = await _Mentor.GetAll()
+                    var interns = await _mentorRepo.GetAll()
                         .Include(x => x.Interns)
-                        .Where(x => x.FirstName.Contains(vm.name) || x.LastName.Contains(vm.name))
+                        .Where(x => x.User.FirstName.Contains(vm.name) || x.User.LastName.Contains(vm.name))
                         .ToListAsync();
                     var collectedInterns = MentorResponseData(interns);
-                    return new GenericResponse<List<MentorDTO>>
+                    return new GenericResponse<List<MentorResponseDTO>>
                     {
-                        IsSuccessful = true,
+                        Successful = true,
                         ResponseCode = ResponseCode.Successful,
                         Data = collectedInterns
                     };
                 }
                 else
                 {
-                    var interns = await _Mentor.GetAll().Include(x => x.Interns).Where(x => x.Department == vm.department).ToListAsync();
+                    var interns = await _mentorRepo.GetAll().Include(x => x.Interns).Where(x => x.User.Department == vm.department).ToListAsync();
 
                     var collectedInterns = MentorResponseData(interns);
-                    return new GenericResponse<List<MentorDTO>>
+                    return new GenericResponse<List<MentorResponseDTO>>
                     {
-                        IsSuccessful = true,
+                        Successful = true,
                         ResponseCode = ResponseCode.Successful,
                         Data = collectedInterns
                     };
@@ -153,55 +160,55 @@ namespace MilsatInternAPI.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Exception occured while Fecthing Data Request. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
-                return new GenericResponse<List<MentorDTO>>
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
-                    IsSuccessful = false,
+                    Successful = false,
                     ResponseCode = ResponseCode.EXCEPTION_ERROR
                 };
             }
         }
 
-        public async Task<GenericResponse<MentorDTO>> UpdateMentor(UpdateMentorVm vm)
+        public async Task<GenericResponse<MentorResponseDTO>> UpdateMentor(UpdateMentorVm vm)
         {
             _logger.LogInformation($"Received a request to update Mentor: Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                var mentor = await _Mentor.GetAll()
+                var mentor = await _mentorRepo.GetAll()
                     .Include(x => x.Interns)
                     .Where(x => x.MentorId.ToString() == vm.MentorId)
                     .FirstOrDefaultAsync();
 
                 if (mentor == null)
                 {
-                    return new GenericResponse<MentorDTO>
+                    return new GenericResponse<MentorResponseDTO>
                     {
-                        IsSuccessful = false,
+                        Successful = false,
                         ResponseCode = ResponseCode.NotFound
                     };
                 }
-                if (vm.Department != mentor.Department)
+                if (vm.Department != mentor.User.Department)
                 {
-                    mentor.Department = vm.Department;
+                    mentor.User.Department = vm.Department;
                     foreach (var intern in mentor.Interns)
                     {
                         intern.Mentor = null;
                     }
                     //mentor.Interns = new List<Intern> { };
 
-                    await _Mentor.UpdateAsync(mentor);
+                    await _mentorRepo.UpdateAsync(mentor);
                 }
 
-                var updatedIntern = new MentorDTO
+                var updatedIntern = new MentorResponseDTO
                 {
                     MentorId = mentor.MentorId,
-                    FirstName = mentor.FirstName,
-                    LastName = mentor.LastName,
-                    Department = mentor.Department,
+                    FirstName = mentor.User.FirstName,
+                    LastName = mentor.User.LastName,
+                    Department = mentor.User.Department,
                     Interns = new List<MentorInternDTO>()
                 };
-                return new GenericResponse<MentorDTO>
+                return new GenericResponse<MentorResponseDTO>
                 {
-                    IsSuccessful = true,
+                    Successful = true,
                     ResponseCode = ResponseCode.Successful,
                     Data = updatedIntern
                 };
@@ -209,59 +216,26 @@ namespace MilsatInternAPI.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Error occured while updating intern. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
-                return new GenericResponse<MentorDTO>
+                return new GenericResponse<MentorResponseDTO>
                 {
-                    IsSuccessful = false,
+                    Successful = false,
                     ResponseCode = ResponseCode.EXCEPTION_ERROR
                 };
             }
         }
 
-        public async Task<GenericResponse<MentorDTO>> RemoveMentor(Guid id)
+        public static List<MentorResponseDTO> MentorResponseData(List<Mentor> source)
         {
-            _logger.LogInformation($"Received a request to delete an Mentor: Request(mentor id):{id}");
-            try
-            {
-                var intern = await _Mentor.GetByIdAsync(id);
-                if (intern == null)
-                {
-                    return new GenericResponse<MentorDTO>
-                    {
-                        IsSuccessful = false,
-                        ResponseCode = ResponseCode.NotFound
-                    };
-                }
-
-                await _Mentor.DeleteAsync(intern);
-                return new GenericResponse<MentorDTO>
-                {
-                    IsSuccessful = true,
-                    ResponseCode = ResponseCode.Successful
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error occured while Deleting Intern. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
-                return new GenericResponse<MentorDTO>
-                {
-                    IsSuccessful = false,
-                    ResponseCode = ResponseCode.EXCEPTION_ERROR
-                };
-            }
-        }
-
-        public static List<MentorDTO> MentorResponseData(List<Mentor> source)
-        {
-            List<MentorDTO> mentors = new();
+            List<MentorResponseDTO> mentors = new();
             foreach (var mentor in source)
             {
                 var interns = AssignedIntern(mentor);
-                mentors.Add(new MentorDTO
+                mentors.Add(new MentorResponseDTO
                 {
                     MentorId = mentor.MentorId,
-                    FirstName = mentor.FirstName,
-                    LastName = mentor.LastName,
-                    Department = mentor.Department,
+                    FirstName = mentor.User.FirstName,
+                    LastName = mentor.User.LastName,
+                    Department = mentor.User.Department,
                     Interns = interns
                 });
             };
@@ -276,7 +250,7 @@ namespace MilsatInternAPI.Services
                 interns.Add(new MentorInternDTO
                 {
                     InternId = intern.InternId,
-                    Name = intern.FirstName,
+                    Name = $"{intern.User?.FirstName} {intern.User?.LastName}",
                 });
             }
             return interns;

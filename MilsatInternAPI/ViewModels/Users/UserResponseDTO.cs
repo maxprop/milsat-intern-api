@@ -1,16 +1,14 @@
 ﻿using MilsatInternAPI.Enums;
-using System.ComponentModel;
 
-namespace MilsatInternAPI.ViewModels.Interns
+namespace MilsatInternAPI.ViewModels.Users
 {
-    public class CreateInternDTO
+    public class UserResponseDTO
     {
+        public Guid UserId { get; set; }
         public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string PhoneNumber { get; set; }
-        [DefaultValue("")]
-        public string MentorId { get; set; }
         public DepartmentType Department { get; set; }
+        public RoleType Role { get; set; }
     }
 }

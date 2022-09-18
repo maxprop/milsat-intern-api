@@ -28,10 +28,10 @@ namespace MilsatInternAPI.Controllers
 
         // GET: api/Mentors
         [HttpGet("GetAllMentors"), Authorize(Roles = "Admin,Mentor")]
-        public async Task<ActionResult<List<MentorDTO>>> GetMentor(int pageNumber = 1, int pageSize = 15)
+        public async Task<ActionResult<List<MentorResponseDTO>>> GetMentor(int pageNumber = 1, int pageSize = 15)
         {
             var result = await _mentorService.GetAllMentors(pageNumber, pageSize);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }
@@ -41,10 +41,10 @@ namespace MilsatInternAPI.Controllers
 
         // GET: api/Mentors/5
         [HttpGet("GetMentor"), Authorize(Roles = "Admin,Mentor")]
-        public async Task<ActionResult<MentorDTO>> GetMentor([FromQuery] GetMentorVm vm)
+        public async Task<ActionResult<MentorResponseDTO>> GetMentor([FromQuery] GetMentorVm vm)
         {
             var result = await _mentorService.GetMentors(vm);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }
@@ -54,10 +54,10 @@ namespace MilsatInternAPI.Controllers
 
         // PUT: api/Mentors/5
         [HttpPut("UpdateMentor"), Authorize(Roles = "Admin")]
-        public async Task<ActionResult<MentorDTO>> PutMentor(UpdateMentorVm mentor)
+        public async Task<ActionResult<MentorResponseDTO>> PutMentor(UpdateMentorVm mentor)
         {
             var result = await _mentorService.UpdateMentor(mentor);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }
@@ -70,7 +70,7 @@ namespace MilsatInternAPI.Controllers
         public async Task<IActionResult> DeleteMentor(Guid id)
         {
             var result = await _mentorService.RemoveMentor(id);
-            if (!result.IsSuccessful)
+            if (!result.Successful)
             {
                 return BadRequest(result);
             }

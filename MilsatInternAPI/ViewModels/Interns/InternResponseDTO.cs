@@ -8,7 +8,7 @@ namespace MilsatInternAPI.ViewModels.Interns
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DepartmentType Department { get; set; }
-        public string MentorName { get; set; }
+        public string? MentorName { get; set; }
     }
 }
     
