@@ -63,18 +63,5 @@ namespace MilsatInternAPI.Controllers
             }
             return Ok(result);
         }
-
-
-        // DELETE: api/Mentors/5
-        [HttpDelete("RemoveMentor/{id}"), Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteMentor(Guid id)
-        {
-            var result = await _mentorService.RemoveMentor(id);
-            if (!result.Successful)
-            {
-                return BadRequest(result);
-            }
-            return Ok(result);
-        }
     }
 }

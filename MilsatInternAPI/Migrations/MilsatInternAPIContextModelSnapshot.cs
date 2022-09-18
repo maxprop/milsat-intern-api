@@ -2,7 +2,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MilsatInternAPI.Data;
 
@@ -18,24 +17,22 @@ namespace MilsatInternAPI.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "6.0.8")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
-
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+                .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("MilsatInternAPI.Models.Intern", b =>
                 {
                     b.Property<Guid>("InternId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<Guid?>("MentorId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("char(36)");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("char(36)");
 
                     b.HasKey("InternId");
 
@@ -51,16 +48,16 @@ namespace MilsatInternAPI.Migrations
                 {
                     b.Property<Guid>("MentorId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("char(36)");
 
                     b.HasKey("MentorId");
 
@@ -72,17 +69,17 @@ namespace MilsatInternAPI.Migrations
                     b.HasData(
                         new
                         {
-                            MentorId = new Guid("20d5c3fe-d2e5-454e-8446-30060188ccf1"),
-                            CreatedOn = new DateTime(2022, 9, 17, 18, 42, 1, 533, DateTimeKind.Utc).AddTicks(8843),
+                            MentorId = new Guid("899af72f-3a54-430b-accd-d9094fa1ba37"),
+                            CreatedOn = new DateTime(2022, 9, 18, 14, 34, 55, 527, DateTimeKind.Utc).AddTicks(3752),
                             Status = 0,
-                            UserId = new Guid("90ae4160-d38f-4218-ad7f-4aae38493c30")
+                            UserId = new Guid("f3ef28d8-ff81-4447-9025-265d5c173686")
                         },
                         new
                         {
-                            MentorId = new Guid("6b9f3d86-8863-4d25-9435-9285fee15b0a"),
-                            CreatedOn = new DateTime(2022, 9, 17, 18, 42, 1, 533, DateTimeKind.Utc).AddTicks(8847),
+                            MentorId = new Guid("aa5f5c50-25ac-4210-bceb-4fdee58d1b7f"),
+                            CreatedOn = new DateTime(2022, 9, 18, 14, 34, 55, 527, DateTimeKind.Utc).AddTicks(3770),
                             Status = 0,
-                            UserId = new Guid("5acf5ea9-e20a-41cf-a14f-23862ed8487f")
+                            UserId = new Guid("8cbdd6c2-2c0d-42f1-b2aa-41f4a25e4d33")
                         });
                 });
 
@@ -90,46 +87,46 @@ namespace MilsatInternAPI.Migrations
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("char(36)");
 
                     b.Property<int>("Department")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                        .HasColumnType("longblob");
 
                     b.Property<byte[]>("PasswordSalt")
                         .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                        .HasColumnType("longblob");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("longtext");
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("TokenCreated")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("TokenExpires")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("UserId");
 
@@ -138,13 +135,13 @@ namespace MilsatInternAPI.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = new Guid("90ae4160-d38f-4218-ad7f-4aae38493c30"),
+                            UserId = new Guid("f3ef28d8-ff81-4447-9025-265d5c173686"),
                             Department = 1,
                             Email = "mentor1@gmail.com",
                             FirstName = "Sodiq",
                             LastName = "Agboola",
-                            PasswordHash = new byte[] { 184, 27, 185, 113, 38, 175, 160, 187, 109, 23, 206, 179, 140, 94, 103, 65, 83, 167, 251, 32, 100, 8, 141, 73, 250, 1, 141, 5, 111, 85, 221, 217, 157, 42, 58, 59, 228, 164, 117, 252, 19, 242, 37, 62, 247, 219, 79, 244, 157, 80, 192, 6, 214, 55, 237, 53, 175, 177, 225, 146, 2, 173, 27, 244 },
-                            PasswordSalt = new byte[] { 215, 54, 126, 123, 33, 142, 49, 48, 164, 240, 123, 94, 239, 110, 179, 1, 48, 18, 112, 76, 34, 156, 132, 56, 57, 170, 71, 22, 11, 31, 23, 138, 182, 28, 33, 226, 161, 193, 15, 156, 153, 83, 210, 63, 30, 97, 195, 193, 57, 165, 131, 202, 234, 74, 89, 68, 8, 27, 135, 172, 120, 177, 90, 124, 225, 37, 236, 195, 98, 51, 87, 43, 169, 190, 123, 245, 195, 176, 99, 191, 16, 225, 88, 228, 71, 148, 81, 25, 144, 58, 219, 79, 72, 175, 108, 255, 143, 111, 185, 86, 86, 92, 181, 189, 173, 38, 182, 254, 66, 2, 103, 227, 223, 120, 29, 103, 254, 37, 78, 149, 128, 190, 131, 122, 72, 221, 214, 228 },
+                            PasswordHash = new byte[] { 122, 114, 197, 7, 0, 252, 241, 221, 236, 180, 206, 49, 29, 237, 246, 71, 45, 75, 203, 115, 6, 233, 163, 144, 61, 171, 209, 212, 163, 40, 152, 184, 54, 70, 165, 16, 101, 40, 252, 244, 84, 116, 31, 236, 34, 199, 224, 30, 115, 226, 40, 44, 237, 66, 64, 92, 251, 228, 190, 147, 55, 139, 255, 179 },
+                            PasswordSalt = new byte[] { 174, 217, 244, 217, 8, 255, 46, 7, 50, 83, 56, 174, 217, 188, 147, 93, 122, 187, 92, 186, 70, 117, 104, 78, 114, 155, 200, 226, 52, 214, 105, 215, 171, 16, 13, 81, 147, 34, 237, 70, 247, 163, 92, 97, 226, 154, 148, 88, 66, 64, 105, 99, 133, 85, 210, 172, 109, 48, 241, 90, 103, 128, 57, 89, 186, 228, 55, 219, 46, 22, 145, 14, 93, 183, 74, 84, 176, 55, 204, 77, 243, 57, 86, 42, 69, 32, 226, 37, 113, 226, 197, 65, 102, 23, 32, 133, 88, 89, 95, 64, 139, 6, 219, 18, 159, 61, 229, 212, 24, 30, 176, 63, 26, 216, 95, 90, 163, 1, 46, 131, 133, 78, 101, 241, 183, 99, 213, 177 },
                             PhoneNumber = "string",
                             Role = 2,
                             TokenCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -152,13 +149,13 @@ namespace MilsatInternAPI.Migrations
                         },
                         new
                         {
-                            UserId = new Guid("5acf5ea9-e20a-41cf-a14f-23862ed8487f"),
+                            UserId = new Guid("8cbdd6c2-2c0d-42f1-b2aa-41f4a25e4d33"),
                             Department = 1,
                             Email = "mentor2@gmail.com",
                             FirstName = "Sodiq",
                             LastName = "Agboola",
-                            PasswordHash = new byte[] { 128, 170, 92, 126, 127, 106, 207, 239, 55, 0, 178, 25, 209, 119, 219, 12, 78, 103, 76, 216, 156, 57, 226, 192, 195, 181, 37, 1, 154, 179, 28, 114, 163, 56, 57, 58, 53, 4, 109, 177, 166, 190, 22, 233, 2, 80, 170, 81, 32, 241, 42, 72, 175, 184, 246, 209, 67, 224, 150, 121, 143, 25, 36, 208 },
-                            PasswordSalt = new byte[] { 53, 33, 133, 0, 182, 70, 63, 215, 105, 33, 128, 59, 129, 178, 187, 226, 233, 210, 86, 33, 203, 200, 20, 25, 89, 185, 246, 27, 61, 217, 48, 232, 71, 252, 245, 135, 140, 233, 8, 233, 166, 213, 82, 147, 17, 102, 237, 94, 50, 156, 53, 166, 73, 183, 83, 187, 58, 189, 109, 231, 143, 147, 57, 211, 59, 59, 130, 222, 112, 250, 115, 20, 69, 46, 42, 7, 195, 181, 60, 87, 167, 20, 109, 84, 219, 219, 47, 243, 73, 22, 17, 211, 120, 163, 122, 96, 153, 191, 73, 36, 59, 193, 189, 32, 11, 218, 223, 50, 37, 208, 114, 147, 171, 174, 87, 69, 18, 221, 40, 118, 147, 239, 168, 125, 191, 177, 76, 119 },
+                            PasswordHash = new byte[] { 143, 153, 224, 144, 192, 18, 20, 247, 164, 137, 182, 230, 56, 9, 129, 143, 196, 156, 68, 83, 125, 183, 49, 65, 1, 97, 224, 248, 146, 76, 212, 58, 22, 179, 36, 130, 115, 172, 240, 26, 1, 22, 68, 115, 186, 60, 148, 105, 61, 248, 21, 150, 152, 45, 127, 223, 188, 242, 234, 157, 246, 45, 33, 61 },
+                            PasswordSalt = new byte[] { 160, 43, 140, 121, 175, 20, 235, 105, 68, 91, 207, 213, 65, 106, 205, 26, 141, 227, 40, 212, 152, 61, 18, 95, 157, 180, 98, 246, 130, 210, 140, 108, 17, 35, 126, 86, 195, 253, 203, 194, 150, 134, 146, 111, 130, 14, 14, 219, 212, 174, 22, 186, 55, 210, 201, 216, 134, 197, 178, 139, 123, 22, 177, 117, 237, 114, 137, 58, 210, 203, 19, 229, 163, 170, 154, 140, 179, 64, 128, 14, 192, 21, 70, 140, 178, 224, 243, 230, 113, 21, 210, 28, 190, 183, 20, 112, 169, 211, 214, 158, 201, 63, 86, 8, 78, 252, 110, 186, 164, 8, 254, 32, 128, 203, 122, 88, 240, 148, 40, 210, 65, 40, 144, 151, 255, 224, 178, 11 },
                             PhoneNumber = "string",
                             Role = 2,
                             TokenCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -166,13 +163,13 @@ namespace MilsatInternAPI.Migrations
                         },
                         new
                         {
-                            UserId = new Guid("f2b20627-2886-45ca-bcc7-96810f7bdd92"),
+                            UserId = new Guid("0a24644e-8b89-42ff-a0c9-59a13987ce74"),
                             Department = 6,
                             Email = "admin@milsat.com",
                             FirstName = "admin",
                             LastName = "admin",
-                            PasswordHash = new byte[] { 171, 188, 104, 114, 222, 179, 105, 151, 140, 217, 34, 121, 57, 55, 186, 59, 184, 104, 90, 196, 48, 235, 56, 148, 177, 95, 224, 172, 147, 181, 38, 254, 210, 157, 56, 248, 164, 48, 193, 140, 222, 4, 126, 41, 244, 170, 115, 145, 252, 63, 6, 183, 245, 108, 155, 177, 155, 4, 12, 86, 168, 177, 250, 209 },
-                            PasswordSalt = new byte[] { 197, 94, 21, 196, 5, 155, 84, 3, 159, 205, 177, 69, 18, 194, 92, 34, 248, 43, 16, 71, 167, 165, 68, 152, 2, 185, 235, 46, 95, 234, 236, 103, 45, 193, 44, 186, 198, 112, 6, 209, 232, 221, 49, 235, 224, 228, 70, 61, 88, 85, 120, 165, 240, 89, 22, 192, 94, 140, 178, 67, 102, 71, 131, 26, 243, 70, 115, 169, 138, 157, 78, 193, 50, 65, 64, 69, 207, 105, 84, 121, 179, 43, 248, 20, 142, 106, 199, 176, 219, 56, 84, 238, 106, 159, 80, 49, 11, 36, 20, 49, 232, 66, 152, 225, 251, 251, 234, 14, 132, 190, 227, 253, 45, 22, 78, 245, 187, 5, 72, 145, 81, 148, 175, 159, 144, 149, 41, 231 },
+                            PasswordHash = new byte[] { 184, 193, 159, 188, 219, 93, 233, 98, 253, 44, 92, 202, 143, 85, 255, 155, 172, 149, 50, 107, 66, 76, 0, 4, 38, 129, 195, 23, 75, 201, 59, 99, 179, 187, 254, 98, 247, 16, 124, 38, 139, 163, 178, 190, 223, 85, 149, 250, 165, 183, 233, 228, 248, 201, 14, 132, 204, 53, 211, 13, 96, 46, 41, 51 },
+                            PasswordSalt = new byte[] { 178, 125, 6, 73, 126, 119, 71, 42, 255, 122, 51, 131, 110, 140, 136, 38, 21, 27, 201, 143, 114, 213, 152, 25, 112, 26, 115, 237, 42, 0, 44, 66, 118, 84, 181, 31, 183, 247, 238, 89, 235, 99, 53, 167, 213, 77, 43, 111, 247, 243, 142, 8, 20, 164, 3, 213, 52, 198, 53, 42, 61, 122, 142, 49, 174, 117, 140, 181, 82, 245, 234, 71, 130, 227, 34, 12, 68, 21, 48, 128, 131, 249, 10, 178, 170, 116, 67, 73, 227, 219, 107, 69, 67, 47, 185, 25, 168, 98, 39, 143, 100, 99, 175, 155, 113, 238, 26, 154, 223, 52, 166, 89, 219, 59, 146, 204, 51, 63, 182, 246, 230, 119, 198, 50, 41, 35, 140, 144 },
                             PhoneNumber = "home",
                             Role = 0,
                             TokenCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
