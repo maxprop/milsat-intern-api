@@ -1,17 +1,17 @@
-﻿# syntax=docker/dockerfile:1
+﻿# Get Base Image (Full .NET Core SDK)
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
-    
-# Copy csproj and restore as distinct layers
+
+# Copy csproj and restore
 COPY *.csproj ./
 RUN dotnet restore
-    
+
 # Copy everything else and build
-COPY ../engine/examples ./
+COPY . ./
 RUN dotnet publish -c Release -o out
-    
-# Build runtime image
+
+# Generate runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /app
-COPY --from=build-env /app/out .
+EXPOSE 80
 ENTRYPOINT ["dotnet", "MilsatInternAPI.dll"]
