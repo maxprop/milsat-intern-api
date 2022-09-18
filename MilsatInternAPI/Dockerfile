@@ -20,4 +20,4 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 #ENTRYPOINT ["dotnet", "MilsatInternAPI.dll"]
-ENTRYPOINT /bin/bash -c "dotnet YourAppName.dll"
+ENTRYPOINT /bin/bash -c "dotnet MilsatInternAPI.dll"
