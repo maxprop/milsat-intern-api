@@ -32,6 +32,16 @@ namespace MilsatInternAPI.Services
                 var mentors = new List<Mentor>();
                 foreach (CreateMentorVm mentor in vm)
                 {
+                    var user = await _userRepo.GetAll().Where(x => x.Email == mentor.Email).FirstOrDefaultAsync();
+                    if (user != null)
+                    {
+                        return new GenericResponse<List<MentorResponseDTO>>
+                        {
+                            Successful = false,
+                            ResponseCode = ResponseCode.INVALID_REQUEST,
+                            Message = "User with this Email already exists"
+                        };
+                    }
                     var newUser = new User { 
                         Email = mentor.Email, FirstName = mentor.FirstName,
                         PhoneNumber = mentor.PhoneNumber,
