@@ -45,14 +45,16 @@ namespace MilsatInternAPI.Services
 
                 var newUser = new User {
                     Email = request.Email, Role = RoleType.Intern,
-                    FirstName = request.FirstName, LastName = request.LastName,
+                    FullName = request.FullName, Gender = request.Gender,
                     PhoneNumber = request.PhoneNumber, Department = request.Department
                 };
                 newUser = _authService.RegisterPassword(newUser, request.PhoneNumber);
 
                 var newIntern = new Intern 
                 { 
-                    UserId = newUser.UserId 
+                    UserId = newUser.UserId,
+                    CourseOfStudy = request.CourseOfStudy,
+                    Institution = request.Institution,
                 };
 
                 if (!String.IsNullOrEmpty(request.MentorId))
@@ -79,7 +81,7 @@ namespace MilsatInternAPI.Services
                 await _internRepo.AddAsync(newIntern);
 
                 //Crete response body
-                var newInterns = InternResponseData(new List<Intern> { newIntern });
+                var newInterns = InternResponseData(new List<User> { newUser });
                 return new GenericResponse<List<InternResponseDTO>>
                 {
                     Successful = true,
@@ -263,18 +265,26 @@ namespace MilsatInternAPI.Services
             }
         }
 
-        public List<InternResponseDTO> InternResponseData(List<Intern> source)
+        public List<InternResponseDTO> InternResponseData(List<User> source)
         {
             List<InternResponseDTO> interns = new();
             foreach (var intern in source)
             {
                 interns.Add(new InternResponseDTO
                 {
-                    InternId = intern.InternId,
-                    FirstName = intern.User.FirstName,
-                    LastName = intern.User.LastName,
-                    Department = intern.User.Department,
-                    MentorName = $"{intern.Mentor?.User?.FirstName} {intern.Mentor?.User?.LastName}",
+                    UserId = intern.UserId,
+                    Email = intern.Email,
+                    FullName = intern.FullName,
+                    PhoneNumber = intern.PhoneNumber,
+                    Department = intern.Department,
+                    CourseOfStudy = intern.Intern.CourseOfStudy,
+                    Institution = intern.Intern.Institution,
+                    Gender = intern.Gender,
+                    Year = intern.Intern.Year,
+                    Bio = intern.Bio,
+                    ProfilePicture = intern.ProfilePicture, 
+                    MentorUserId = intern.Intern.Mentor?.UserId,
+                    MentorFullName = $"{intern.Mentor.User.FullName}",
                 });
             };
             return interns;

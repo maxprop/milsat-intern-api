@@ -46,7 +46,7 @@ namespace MilsatInternAPI.Data
             {
                 var user = new User { 
                     UserId = Guid.NewGuid(), Email = $"mentor{i}@gmail.com", Role = RoleType.Mentor,
-                    FirstName = "Sodiq", LastName = "Agboola", PhoneNumber = "string", Department = DepartmentType.Backend
+                    FirstName = "Sodiq", LastName = "Agboola", PhoneNumber = "string", Department = DepartmentType.Backend,
                 };
                 var _user = setter(user, password);
                 all.Add(_user);
