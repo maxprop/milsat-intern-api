@@ -4,7 +4,8 @@ namespace MilsatInternAPI.ViewModels.Users
 {
     public class UpdateUserVm
     {
-        public string MentorId { get; set; }
-        public DepartmentType Department { get; set; }
+        public Guid UserId { get; set; }
+        public IFormFile ProfilePicture { get; set; }
+        public string Bio { get; set; }
     }
 }

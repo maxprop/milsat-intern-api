@@ -5,10 +5,10 @@ namespace MilsatInternAPI.Models
 {
     public class Mentor
     {
-        public Guid MentorId { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public MentorStatus Status { get; set; }
-        public Guid UserId { get; set; }
+        [ForeignKey("MentorId")]
+        public Guid MentorId { get; set; }
         public User User { get; set; }
         public List<Intern> Interns { get; set; }
     }

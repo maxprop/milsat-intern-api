@@ -4,11 +4,19 @@ namespace MilsatInternAPI.ViewModels.Interns
 {
     public class InternResponseDTO
     {
-        public Guid InternId { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
+        public Guid UserId { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; }
+        public string FullName { get; set; }
         public DepartmentType Department { get; set; }
-        public string? MentorName { get; set; }
+        public string CourseOfStudy { get; set; }
+        public string Institution { get; set; }
+        public GenderType Gender { get; set; }
+        public Guid? MentorUserId { get; set; }
+        public string? MentorFullName { get; set; }
+        public int Year { get; set; }
+        public string Bio { get; set; }
+        public string ProfilePicture { get; set; }
     }
 }
     
