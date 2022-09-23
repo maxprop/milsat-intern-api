@@ -69,7 +69,7 @@ namespace MilsatInternAPI.Services
                             Message = "Invalid MentorID Supplied"
                         };
                     }
-                    Mentor selectedMentor = await _mentorRepo.GetAll().Include(x => x.User.Department).SingleAsync(x => x.UserId == MentorGuid);
+                    Mentor selectedMentor = await _mentorRepo.GetAll().Include(x => x.User).SingleAsync(x => x.UserId == MentorGuid);
                     if (selectedMentor != null && selectedMentor.User.Department == newUser.Department)
                     {
                         newIntern.MentorId = selectedMentor.UserId;

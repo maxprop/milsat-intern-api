@@ -48,7 +48,7 @@ namespace MilsatInternAPI.Services
                         PhoneNumber = mentor.PhoneNumber, Department = mentor.Department
                     };
                     newUser = _authService.RegisterPassword(newUser, mentor.PhoneNumber);
-                    //await _userRepo.AddAsync(newUser);
+                    await _userRepo.AddAsync(newUser);
                     var singleMentor = new Mentor { UserId = newUser.UserId, Interns = new List<Intern>() };
                     singleMentor.UserId = newUser.UserId;
                     mentors.Add(singleMentor);
@@ -79,9 +79,8 @@ namespace MilsatInternAPI.Services
         {
             try
             {
-                var pagedData = await _mentorRepo.GetAll().Include(x => x.User)
-                                                      .Include(x => x.Interns)
-                                                        //.ThenInclude(x => x.User)
+                var pagedData = await _userRepo.GetAll().Include(x => x.Mentor).ThenInclude(x => x.Interns)
+                                                      .Where(x => x.Role == RoleType.Mentor)
                                                       .Skip((pageNumber - 1) * pageSize)
                                                       .Take(pageSize).ToListAsync();
                 var collectedMentors = MentorResponseData(pagedData);
@@ -213,7 +212,7 @@ namespace MilsatInternAPI.Services
                     UserId = mentor.UserId,
                     FullName = mentor.User.FullName,
                     Department = mentor.User.Department,
-                    Interns = new List<MentorInternDTO>()
+                    InternUserIDs = new List<Guid>()
                 };
                 return new GenericResponse<MentorResponseDTO>
                 {
@@ -238,7 +237,7 @@ namespace MilsatInternAPI.Services
             List<MentorResponseDTO> mentors = new();
             foreach (var mentor in source)
             {
-                var interns = AssignedIntern(mentor);
+                var interns = AssignedIntern(mentor.Interns);
                 mentors.Add(new MentorResponseDTO
                 {
                     UserId = mentor.UserId,
@@ -249,23 +248,42 @@ namespace MilsatInternAPI.Services
                     Gender = mentor.User.Gender,
                     Bio = mentor.User.Bio,
                     ProfilePicture = mentor.User.ProfilePicture,
-                    Interns = interns
+                    InternUserIDs = interns
                 });
             };
             return mentors;
         }
 
-        public static List<MentorInternDTO> AssignedIntern(Mentor mentor)
+        public static List<MentorResponseDTO> MentorResponseData(List<User> source)
         {
-            List<MentorInternDTO> interns = new List<MentorInternDTO>();
-            foreach (var intern in mentor.Interns)
+            List<MentorResponseDTO> mentors = new();
+            foreach (var mentor in source)
             {
-                interns.Add(new MentorInternDTO
+                var interns = AssignedIntern(mentor.Mentor.Interns);
+                mentors.Add(new MentorResponseDTO
                 {
-                    InternId = intern.UserId,
+                    UserId = mentor.UserId,
+                    Email = mentor.Email,
+                    FullName = mentor.FullName,
+                    PhoneNumber = mentor.PhoneNumber,
+                    Department = mentor.Department,
+                    Gender = mentor.Gender,
+                    Bio = mentor.Bio,
+                    ProfilePicture = mentor.ProfilePicture,
+                    InternUserIDs = interns
                 });
+            };
+            return mentors;
+        }
+
+        public static List<Guid> AssignedIntern(List<Intern> interns)
+        {
+            List<Guid> internIDs = new();
+            foreach (var intern in interns)
+            {
+                internIDs.Add(intern.UserId );
             }
-            return interns;
+            return internIDs;
         }
     }
 }
