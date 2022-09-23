@@ -4,19 +4,19 @@ namespace MilsatInternAPI.Enums
 {
     public enum DepartmentType
     {
-        [Description("Analytics")]
-        Analytics,
         [Description("Backend")]
         Backend,
-        [Description("Cybersecurity")]
-        Cybersecurity,
-        [Description("DevOps")]
-        DevOps,
+        [Description("Branding and Communication")]
+        Branding,
+        [Description("Community")]
+        Community,
         [Description("Frontend")]
         Frontend,
-        [Description("UIUX")]
-        UIUX,
+        [Description("Mobile")]
+        Mobile,
         [Description("Staff")]
-        Staff
+        Staff,
+        [Description("UIUX")]
+        UIUX
     }
 }

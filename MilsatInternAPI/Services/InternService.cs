@@ -69,11 +69,10 @@ namespace MilsatInternAPI.Services
                             Message = "Invalid MentorID Supplied"
                         };
                     }
-                    Mentor selectedMentor = await _mentorRepo.GetAll().Include(x => x.User)
-                                                                      .SingleAsync(x => x.MentorId == MentorGuid);
-                    if (selectedMentor != null)
+                    Mentor selectedMentor = await _mentorRepo.GetAll().Include(x => x.User.Department).SingleAsync(x => x.UserId == MentorGuid);
+                    if (selectedMentor != null && selectedMentor.User.Department == newUser.Department)
                     {
-                        newIntern.MentorId = selectedMentor.MentorId;
+                        newIntern.MentorId = selectedMentor.UserId;
                     }
                 }
                 await _userRepo.AddAsync(newUser);
@@ -105,10 +104,9 @@ namespace MilsatInternAPI.Services
             _logger.LogInformation($"Received a request to fetch paginated Intern(s): Request: pageNumber:{pageNumber}, pageSize:{pageSize}");
             try
             {
-                var pagedData = await _internRepo.GetAll()
-                    .Include(x => x.User)
-                    .Include(x => x.Mentor)
-                        .ThenInclude(x => x.User)
+                var pagedData = await _userRepo.GetAll()
+                    .Include(x => x.Intern)
+                    .Where(x => x.Role == RoleType.Intern)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
                     .ToListAsync();
@@ -132,79 +130,58 @@ namespace MilsatInternAPI.Services
             }
         }
 
-        public async Task<GenericResponse<List<InternResponseDTO>>> GetInterns(GetInternVm vm)
+        public async Task<GenericResponse<List<InternResponseDTO>>> GetInternById(Guid id)
         {
-            _logger.LogInformation($"Received a request to Fetch Intern(s): Request:{JsonConvert.SerializeObject(vm)}");
-            if (vm.id == null && vm.name == null && vm.department == null)
+            _logger.LogInformation($"Received a request to fetch an Intern: Request(user id):{id}");
+            try
             {
+                var user = await _userRepo.GetAll()
+                    .Include(x => x.Intern)
+                    .Where(x => x.UserId == id).SingleOrDefaultAsync();
+                if (user == null)
+                {
+                    return new GenericResponse<List<InternResponseDTO>>
+                    {
+                        Successful = false,
+                        ResponseCode = ResponseCode.NotFound
+                    };
+                }
+                return new GenericResponse<List<InternResponseDTO>>
+                {
+                    Successful = true,
+                    ResponseCode = ResponseCode.Successful,
+                    Data = InternResponseData(new List<User> { user })
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured while Fetching Intern. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
                 return new GenericResponse<List<InternResponseDTO>>
                 {
                     Successful = false,
-                    ResponseCode = ResponseCode.NotFound
+                    ResponseCode = ResponseCode.EXCEPTION_ERROR
                 };
             }
+
+        }
+
+        public async Task<GenericResponse<List<InternResponseDTO>>> FilterInterns(GetInternVm vm, int pageNumber, int pageSize)
+        {
+            _logger.LogInformation($"Received a request to Fetch Intern(s): Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                if (vm.id != null)
+                var filtered = await _userRepo.GetAll().Include(e => e.Intern)
+                                                 .Where(x => x.Role == RoleType.Intern &&
+                                                        (vm.name == null || x.FullName.Contains(vm.name)
+                                                        && vm.department == null || x.Department == vm.department))
+                                                 .Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+                var users = InternResponseData(filtered);
+                return new GenericResponse<List<InternResponseDTO>>
                 {
-                    var intern = await _internRepo.GetAll().Include(x => x.User)
-                                                     .Include(x => x.Mentor)
-                                                         .ThenInclude(x => x.User)
-                                                     .Where(x => x.InternId == vm.id)
-                                                     .FirstOrDefaultAsync();
-                    if (intern == null)
-                    {
-                        _logger.LogInformation($"Invalid ID Received: Request:{JsonConvert.SerializeObject(vm)}");
-                        return new GenericResponse<List<InternResponseDTO>>
-                        {
-                            Successful = false,
-                            ResponseCode = ResponseCode.NotFound
-                        };
-                    }
-
-                    var collectedIntern = InternResponseData(new List<Intern> { intern });
-                    return new GenericResponse<List<InternResponseDTO>>
-                    {
-                        Successful = true,
-                        ResponseCode = ResponseCode.Successful,
-                        Data = collectedIntern
-                    };
-                }
-
-                // Received only name without department
-                else if (vm.name != null && vm.department == null)
-                {
-                    var interns = await _internRepo.GetAll().Include(x => x.User)
-                                                       .Include(x => x.Mentor)
-                                                           .ThenInclude(x => x.User)
-                                                       .Where(x => x.User.FirstName.Contains(vm.name) || x.User.LastName.Contains(vm.name))
-                                                       .ToListAsync();
-                    var collectedInterns = InternResponseData(interns);
-                    return new GenericResponse<List<InternResponseDTO>>
-                    {
-                        Successful = true,
-                        ResponseCode = ResponseCode.Successful,
-                        Data = collectedInterns
-                    };
-                }
-
-                //Received only Department without name
-                //else if (model.name == null && model.department != null)
-                else
-                {
-                    var interns = await _internRepo.GetAll().Include(x => x.User)
-                                                        .Include(x => x.Mentor)
-                                                            .ThenInclude(x => x.User)
-                                                        .Where(x => x.User.Department == vm.department)
-                                                        .ToListAsync();
-                    var collectedInterns =  InternResponseData(interns);
-                    return new GenericResponse<List<InternResponseDTO>>
-                    {
-                        Successful = true,
-                        ResponseCode = ResponseCode.Successful,
-                        Data = collectedInterns
-                    };
-                }
+                    Successful = true,
+                    ResponseCode = ResponseCode.Successful,
+                    Data = users
+                };
             }
             catch (Exception ex)
             {
@@ -218,46 +195,40 @@ namespace MilsatInternAPI.Services
         }
 
 
-        public async Task<GenericResponse<InternResponseDTO>> UpdateIntern(UpdateInternVm vm)
+        public async Task<GenericResponse<List<InternResponseDTO>>> UpdateIntern(UpdateInternVm vm)
         {
             _logger.LogInformation($"Received a request to update Intern: Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                var intern = await _userRepo.GetByIdAsync(vm.UserId);
+                var user = await _userRepo.GetByIdAsync(vm.UserId);
 
-                if (intern == null)
+                if (user == null)
                 {
-                    return new GenericResponse<InternResponseDTO>
+                    return new GenericResponse<List<InternResponseDTO>>
                     {
                         Successful = false,
                         ResponseCode = ResponseCode.NotFound
                     };
                 }
 
-                intern.Department = vm.Department;
+                user.Department = vm.Department;
                 var selectedMentor = await _mentorRepo.GetByIdAsync(vm.MentorId);
                 if (selectedMentor != null)
                 {
-                    intern.Intern.MentorId = vm.MentorId;
+                    user.Intern.MentorId = vm.MentorId;
                 }
-                await _userRepo.UpdateAsync(intern);
-                var updatedIntern = new InternResponseDTO
-                {
-                    InternId = intern.Intern.InternId, FirstName = intern.FirstName,
-                    LastName = intern.LastName, Department = intern.Department,
-                    MentorName = $"{intern.Intern.Mentor?.User.FirstName} {intern.Intern.Mentor?.User.LastName}"
-                };
-                return new GenericResponse<InternResponseDTO>
+                await _userRepo.UpdateAsync(user);
+                return new GenericResponse<List<InternResponseDTO>>
                 {
                     Successful = true,
                     ResponseCode = ResponseCode.Successful,
-                    Data = updatedIntern
+                    Data = InternResponseData(new List<User> { user })
                 };
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error occured while updating intern. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
-                return new GenericResponse<InternResponseDTO>
+                return new GenericResponse<List<InternResponseDTO>>
                 {
                     Successful = false,
                     ResponseCode = ResponseCode.EXCEPTION_ERROR
@@ -268,23 +239,22 @@ namespace MilsatInternAPI.Services
         public List<InternResponseDTO> InternResponseData(List<User> source)
         {
             List<InternResponseDTO> interns = new();
-            foreach (var intern in source)
+            foreach (var user in source)
             {
                 interns.Add(new InternResponseDTO
                 {
-                    UserId = intern.UserId,
-                    Email = intern.Email,
-                    FullName = intern.FullName,
-                    PhoneNumber = intern.PhoneNumber,
-                    Department = intern.Department,
-                    CourseOfStudy = intern.Intern.CourseOfStudy,
-                    Institution = intern.Intern.Institution,
-                    Gender = intern.Gender,
-                    Year = intern.Intern.Year,
-                    Bio = intern.Bio,
-                    ProfilePicture = intern.ProfilePicture, 
-                    MentorUserId = intern.Intern.Mentor?.UserId,
-                    MentorFullName = $"{intern.Mentor.User.FullName}",
+                    UserId = user.UserId,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    PhoneNumber = user.PhoneNumber,
+                    Department = user.Department,
+                    CourseOfStudy = user.Intern.CourseOfStudy,
+                    Institution = user.Intern.Institution,
+                    Gender = user.Gender,
+                    Year = user.Intern.Year,
+                    Bio = user.Bio,
+                    ProfilePicture = user.ProfilePicture, 
+                    MentorUserId = user.Intern.MentorId,
                 });
             };
             return interns;

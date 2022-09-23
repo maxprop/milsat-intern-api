@@ -15,6 +15,7 @@ namespace MilsatInternAPI.Models
         [MaxLength(100)]
         public string Bio { get; set; } = string.Empty;
         public string ProfilePicture { get; set; } = string.Empty;
+        [Required]
         public GenderType Gender { get; set; }
         [Required]
         public DepartmentType Department { get; set; }

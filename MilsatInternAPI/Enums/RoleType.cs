@@ -6,9 +6,9 @@ namespace MilsatInternAPI.Enums
     {
         [Description("Admin Role")]
         Admin,
-        [Description("Intern Role")]
-        Intern,
         [Description("Mentor Role")]
-        Mentor
+        Mentor,
+        [Description("Intern Role")]
+        Intern
     }
 }

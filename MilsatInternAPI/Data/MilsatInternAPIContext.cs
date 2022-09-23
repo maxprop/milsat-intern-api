@@ -27,36 +27,41 @@ namespace MilsatInternAPI.Data
                 .WithOne(e => e.Intern)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Intern>()
+                .HasOne(e => e.Mentor)
+                .WithMany(e => e.Interns)
+                .OnDelete(DeleteBehavior.ClientCascade);
+
             modelBuilder.Entity<Mentor>()
                 .HasOne(e => e.User)
                 .WithOne(e => e.Mentor)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            var all = createUsers("string");
+            var all = createUsers();
             modelBuilder.Entity<User>().HasData(all[0], all[1], all[2]);
 
             modelBuilder.Entity<Mentor>().HasData(
-            new Mentor { MentorId = Guid.NewGuid(), UserId = all[0].UserId },
-            new Mentor { MentorId = Guid.NewGuid(), UserId = all[1].UserId });
+            new Mentor {UserId = all[0].UserId },
+            new Mentor {UserId = all[1].UserId });
         }
-        private List<User> createUsers( string password)
+        private List<User> createUsers()
         {
             var all = new List<User>();
             for (int i = 1; i < 3; i++)
             {
                 var user = new User { 
                     UserId = Guid.NewGuid(), Email = $"mentor{i}@gmail.com", Role = RoleType.Mentor,
-                    FirstName = "Sodiq", LastName = "Agboola", PhoneNumber = "string", Department = DepartmentType.Backend,
+                    FullName = "Sodiq Agboola", PhoneNumber = "string", Department = DepartmentType.Backend,
                 };
-                var _user = setter(user, password);
+                var _user = setter(user, user.PhoneNumber);
                 all.Add(_user);
             }
 
             var admin = new User {
                 UserId = Guid.NewGuid(), Email = "admin@milsat.com", Role = RoleType.Admin,
-                FirstName = "admin", LastName = "admin", PhoneNumber = "home", Department = DepartmentType.Staff
+                FullName = "Admin", PhoneNumber = "home", Department = DepartmentType.Staff
             };
-            var _admin = setter(admin, password);
+            var _admin = setter(admin, admin.PhoneNumber);
             all.Add(_admin);
             return all;
         }

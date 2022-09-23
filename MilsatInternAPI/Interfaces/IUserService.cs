@@ -8,6 +8,7 @@ namespace MilsatInternAPI.Interfaces
         Task<GenericResponse<List<UserResponseDTO>>> GetAllUsers(int pageNumber, int pageSize);
         Task<GenericResponse<List<UserResponseDTO>>> FilterUsers(GetUserVm vm, int pageNumber, int pageSize);
         Task<GenericResponse<List<UserResponseDTO>>> GetUserById(Guid id);
+        Task<GenericResponse<UserResponseDTO>> UpdateProfile(UpdateUserVm vm);
         Task<GenericResponse<UserResponseDTO>> RemoveUser(Guid id);
     }
 }

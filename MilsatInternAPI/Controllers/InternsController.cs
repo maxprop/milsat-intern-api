@@ -41,10 +41,23 @@ namespace MilsatInternAPI.Controllers
         }
 
 
-        [HttpGet("GetIntern/"), Authorize]
-        public async Task<ActionResult<List<InternResponseDTO>>> GetIntern([FromQuery] GetInternVm model)
+        [HttpGet("GetIntern"), Authorize]
+        public async Task<ActionResult<List<InternResponseDTO>>> FilterIntern(
+            [FromQuery] GetInternVm model,
+            int pageNumber = 1, int pageSize = 15)
         {
-            var result = await _internService.GetInterns(model);
+            var result = await _internService.FilterInterns(model, pageNumber, pageSize);
+            if (!result.Successful)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
+        [HttpGet("GetIntern/{id}"), Authorize]
+        public async Task<ActionResult<List<InternResponseDTO>>> GetIntern(Guid id)
+        {
+            var result = await _internService.GetInternById(id);
             if (!result.Successful)
             {
                 return BadRequest(result);

@@ -74,7 +74,7 @@ namespace MilsatInternAPI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error occured while Deleting User. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
+                _logger.LogError($"Error occured while Fetching User. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
                 return new GenericResponse<List<UserResponseDTO>>
                 {
                     Successful = false,
@@ -90,9 +90,9 @@ namespace MilsatInternAPI.Services
             {
                 var filtered = await _userRepo.GetAll()
                                                  .Where(x =>
-                                                         (vm.name == null || x.FirstName.Contains(vm.name) || x.LastName.Contains(vm.name))
-                                                         && (vm.department != null && x.Department == vm.department)
-                                                         && (vm.role != null && x.Role == vm.role))
+                                                         (vm.name == null || x.FullName.Contains(vm.name))
+                                                         && (vm.department == null || x.Department == vm.department)
+                                                         && (vm.role == null || x.Role == vm.role))
                                                  .Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
                 var users = UserResponseData(filtered);
                 return new GenericResponse<List<UserResponseDTO>>
@@ -160,6 +160,8 @@ namespace MilsatInternAPI.Services
                     user.ProfilePicture = fileName;
                 }
 
+                user.Bio = vm.Bio;
+
                 return new GenericResponse<UserResponseDTO>
                 {
                     Successful = true,
@@ -220,8 +222,8 @@ namespace MilsatInternAPI.Services
                 {
                     UserId = user.UserId,
                     Email = user.Email,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
+                    FullName = user.FullName,
+                    PhoneNumber = user.PhoneNumber,
                     Bio = user.Bio,
                     ProfilePicture = GetUserPicture(user.ProfilePicture),
                     Department = user.Department,

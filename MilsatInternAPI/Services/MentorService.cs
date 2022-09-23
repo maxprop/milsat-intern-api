@@ -43,13 +43,13 @@ namespace MilsatInternAPI.Services
                         };
                     }
                     var newUser = new User { 
-                        Email = mentor.Email, FirstName = mentor.FirstName,
-                        PhoneNumber = mentor.PhoneNumber,
-                        LastName = mentor.LastName, Department = mentor.Department
+                        Email = mentor.Email, Role = RoleType.Mentor,
+                        FullName = mentor.FullName, Gender = mentor.Gender,
+                        PhoneNumber = mentor.PhoneNumber, Department = mentor.Department
                     };
                     newUser = _authService.RegisterPassword(newUser, mentor.PhoneNumber);
-                    await _userRepo.AddAsync(newUser);
-                    var singleMentor = new Mentor { UserId = newUser.UserId, Interns = new List<Intern>()};
+                    //await _userRepo.AddAsync(newUser);
+                    var singleMentor = new Mentor { UserId = newUser.UserId, Interns = new List<Intern>() };
                     singleMentor.UserId = newUser.UserId;
                     mentors.Add(singleMentor);
                 }
@@ -81,7 +81,7 @@ namespace MilsatInternAPI.Services
             {
                 var pagedData = await _mentorRepo.GetAll().Include(x => x.User)
                                                       .Include(x => x.Interns)
-                                                        .ThenInclude(x => x.User)
+                                                        //.ThenInclude(x => x.User)
                                                       .Skip((pageNumber - 1) * pageSize)
                                                       .Take(pageSize).ToListAsync();
                 var collectedMentors = MentorResponseData(pagedData);
@@ -119,7 +119,7 @@ namespace MilsatInternAPI.Services
             {
                 if (vm.id != null) {
                     var mentor = await _mentorRepo.GetAll().Include(mentor => mentor.Interns)
-                                                       .Where(x => x.MentorId == vm.id)
+                                                       .Where(x => x.UserId == vm.id)
                                                        .FirstOrDefaultAsync();
 
                     if (mentor == null)
@@ -144,7 +144,7 @@ namespace MilsatInternAPI.Services
                 {
                     var interns = await _mentorRepo.GetAll()
                         .Include(x => x.Interns)
-                        .Where(x => x.User.FirstName.Contains(vm.name) || x.User.LastName.Contains(vm.name))
+                        .Where(x => x.User.FullName.Contains(vm.name))
                         .ToListAsync();
                     var collectedInterns = MentorResponseData(interns);
                     return new GenericResponse<List<MentorResponseDTO>>
@@ -185,7 +185,7 @@ namespace MilsatInternAPI.Services
             {
                 var mentor = await _mentorRepo.GetAll()
                     .Include(x => x.Interns)
-                    .Where(x => x.MentorId.ToString() == vm.MentorId)
+                    .Where(x => x.UserId.ToString() == vm.MentorId)
                     .FirstOrDefaultAsync();
 
                 if (mentor == null)
@@ -210,9 +210,8 @@ namespace MilsatInternAPI.Services
 
                 var updatedIntern = new MentorResponseDTO
                 {
-                    MentorId = mentor.MentorId,
-                    FirstName = mentor.User.FirstName,
-                    LastName = mentor.User.LastName,
+                    UserId = mentor.UserId,
+                    FullName = mentor.User.FullName,
                     Department = mentor.User.Department,
                     Interns = new List<MentorInternDTO>()
                 };
@@ -242,10 +241,14 @@ namespace MilsatInternAPI.Services
                 var interns = AssignedIntern(mentor);
                 mentors.Add(new MentorResponseDTO
                 {
-                    MentorId = mentor.MentorId,
-                    FirstName = mentor.User.FirstName,
-                    LastName = mentor.User.LastName,
+                    UserId = mentor.UserId,
+                    Email = mentor.User.Email,
+                    FullName = mentor.User.FullName,
+                    PhoneNumber = mentor.User.PhoneNumber,
                     Department = mentor.User.Department,
+                    Gender = mentor.User.Gender,
+                    Bio = mentor.User.Bio,
+                    ProfilePicture = mentor.User.ProfilePicture,
                     Interns = interns
                 });
             };
@@ -259,8 +262,7 @@ namespace MilsatInternAPI.Services
             {
                 interns.Add(new MentorInternDTO
                 {
-                    InternId = intern.InternId,
-                    Name = $"{intern.User?.FirstName} {intern.User?.LastName}",
+                    InternId = intern.UserId,
                 });
             }
             return interns;

@@ -49,6 +49,17 @@ namespace MilsatInternAPI.Controllers
             return Ok(result);
         }
 
+        [HttpPost("UpdateUser"), Authorize]
+        public async Task<ActionResult<List<UserResponseDTO>>> UpdateUserProfile(UpdateUserVm vm)
+        {
+            var result = await _userService.UpdateProfile(vm);
+            if (!result.Successful)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
 
         [HttpGet("DeleteUser/{id}"), Authorize]
         public async Task<ActionResult<List<UserResponseDTO>>> DeleteUser(Guid id)
