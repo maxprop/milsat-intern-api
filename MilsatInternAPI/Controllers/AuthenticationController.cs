@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MilsatInternAPI.Enums;
 using MilsatInternAPI.Interfaces;
 using MilsatInternAPI.ViewModels;
 using MilsatInternAPI.ViewModels.Interns;
@@ -33,7 +34,7 @@ namespace MilsatInternAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPost("RegisterIntern"), Authorize(Roles = "Admin")]
+        [HttpPost("RegisterIntern"), Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<InternResponseDTO>> RegisterIntern(CreateInternDTO intern) 
         {
             var result = await _internService.AddIntern(intern);
@@ -44,7 +45,7 @@ namespace MilsatInternAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPost("RegisterMentor"), Authorize(Roles = "Admin")]
+        [HttpPost("RegisterMentor"), Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<InternResponseDTO>> RegisterMentor(List<CreateMentorVm> mentor)
         {
             var result = await _mentorService.AddMentor(mentor);

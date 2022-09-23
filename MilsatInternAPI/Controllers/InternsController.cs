@@ -67,7 +67,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // PUT: api/Interns/5
-        [HttpPut("UpdateIntern"), Authorize(Roles = "Admin")]
+        [HttpPut("UpdateIntern"), Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<InternResponseDTO>> PutIntern(UpdateInternVm intern)
         {
             var result = await _internService.UpdateIntern(intern);

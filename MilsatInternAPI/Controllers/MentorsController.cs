@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MilsatInternAPI.Data;
+using MilsatInternAPI.Enums;
 using MilsatInternAPI.Interfaces;
 using MilsatInternAPI.Models;
 using MilsatInternAPI.ViewModels.Mentors;
@@ -27,7 +28,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // GET: api/Mentors
-        [HttpGet("GetAllMentors"), Authorize(Roles = "Admin,Mentor")]
+        [HttpGet("GetAllMentors"), Authorize(Roles = $"{nameof(RoleType.Admin)}, {nameof(RoleType.Mentor)}" )]
         public async Task<ActionResult<List<MentorResponseDTO>>> GetMentor(int pageNumber = 1, int pageSize = 15)
         {
             var result = await _mentorService.GetAllMentors(pageNumber, pageSize);
@@ -40,7 +41,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // GET: api/Mentors/5
-        [HttpGet("GetMentor"), Authorize(Roles = "Admin,Mentor")]
+        [HttpGet("GetMentor"), Authorize(Roles = $"{nameof(RoleType.Admin)}, {nameof(RoleType.Mentor)}")]
         public async Task<ActionResult<MentorResponseDTO>> GetMentor([FromQuery] GetMentorVm vm)
         {
             var result = await _mentorService.GetMentors(vm);
@@ -53,7 +54,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // PUT: api/Mentors/5
-        [HttpPut("UpdateMentor"), Authorize(Roles = "Admin")]
+        [HttpPut("UpdateMentor"), Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<MentorResponseDTO>> PutMentor(UpdateMentorVm mentor)
         {
             var result = await _mentorService.UpdateMentor(mentor);
