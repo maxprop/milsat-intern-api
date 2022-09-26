@@ -5,6 +5,7 @@ using MilsatInternAPI.Models;
 using MilsatInternAPI.ViewModels;
 using MilsatInternAPI.ViewModels.Mentors;
 using Newtonsoft.Json;
+using System.Security.Claims;
 
 namespace MilsatInternAPI.Services
 {
@@ -14,14 +15,16 @@ namespace MilsatInternAPI.Services
         private readonly IAsyncRepository<User> _userRepo;
         private readonly IAsyncRepository<Mentor> _mentorRepo;
         private readonly IAuthentication _authService;
+        private readonly IHttpContextAccessor _httpContext;
         public MentorService(IAsyncRepository<Mentor> mentorRepo,
             ILogger<MentorService> logger, IAuthentication authService,
-            IAsyncRepository<User> userRepo)
+            IAsyncRepository<User> userRepo, IHttpContextAccessor httpContext)
         {
             _mentorRepo = mentorRepo;
             _logger = logger;
             _authService = authService;
             _userRepo = userRepo;
+            _httpContext = httpContext;
         }
 
         public async Task<GenericResponse<List<MentorResponseDTO>>> AddMentor(List<CreateMentorVm> vm)
@@ -77,6 +80,7 @@ namespace MilsatInternAPI.Services
 
         public async Task<GenericResponse<List<MentorResponseDTO>>> GetAllMentors(int pageNumber, int pageSize)
         {
+            _logger.LogInformation($"Received a request to fetch all mentors with : Pagination - (pageNumber):{pageNumber}, (pageSize):{pageSize}");
             try
             {
                 var pagedData = await _userRepo.GetAll().Include(x => x.Mentor).ThenInclude(x => x.Interns)
@@ -102,69 +106,29 @@ namespace MilsatInternAPI.Services
             }
         }
 
-        public async Task<GenericResponse<List<MentorResponseDTO>>> GetMentors(GetMentorVm vm)
+        public async Task<GenericResponse<List<MentorResponseDTO>>> GetMentorById(Guid id)
         {
-            _logger.LogInformation($"Received a request to Fetch Intern(s): Request:{JsonConvert.SerializeObject(vm)}");
-            if (vm.id == null && vm.name == null && vm.department == null)
-            {
-                return new GenericResponse<List<MentorResponseDTO>>
-                {
-                    Successful = false,
-                    ResponseCode = ResponseCode.NotFound
-                };
-            }
-
+            _logger.LogInformation($"Received a request to fetch a Mentor: Request(user id):{id}");
             try
             {
-                if (vm.id != null) {
-                    var mentor = await _mentorRepo.GetAll().Include(mentor => mentor.Interns)
-                                                       .Where(x => x.UserId == vm.id)
-                                                       .FirstOrDefaultAsync();
+                var user = await _userRepo.GetAll()
+                   .Include(x => x.Mentor).ThenInclude(x => x.Interns)
+                   .Where(x => x.UserId == id).SingleOrDefaultAsync();
 
-                    if (mentor == null)
-                    {
-                        _logger.LogInformation($"Invalid ID Received: Request:{JsonConvert.SerializeObject(vm)}");
-                        return new GenericResponse<List<MentorResponseDTO>>
-                        {
-                            Successful = false,
-                            ResponseCode = ResponseCode.NotFound
-                        };
-                    }
-
-                    var collectedMentor = MentorResponseData(new List<Mentor> { mentor });
-                    return new GenericResponse<List<MentorResponseDTO>>
-                    {
-                        Successful = true,
-                        ResponseCode = ResponseCode.Successful,
-                        Data = collectedMentor
-                    };
-                }
-                else if (vm.name != null && vm.department == null)
+                if (user == null)
                 {
-                    var interns = await _mentorRepo.GetAll()
-                        .Include(x => x.Interns)
-                        .Where(x => x.User.FullName.Contains(vm.name))
-                        .ToListAsync();
-                    var collectedInterns = MentorResponseData(interns);
                     return new GenericResponse<List<MentorResponseDTO>>
                     {
-                        Successful = true,
-                        ResponseCode = ResponseCode.Successful,
-                        Data = collectedInterns
+                        Successful = false,
+                        ResponseCode = ResponseCode.NotFound
                     };
                 }
-                else
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
-                    var interns = await _mentorRepo.GetAll().Include(x => x.Interns).Where(x => x.User.Department == vm.department).ToListAsync();
-
-                    var collectedInterns = MentorResponseData(interns);
-                    return new GenericResponse<List<MentorResponseDTO>>
-                    {
-                        Successful = true,
-                        ResponseCode = ResponseCode.Successful,
-                        Data = collectedInterns
-                    };
-                }
+                    Successful = true,
+                    ResponseCode = ResponseCode.Successful,
+                    Data = MentorResponseData(new List<User> { user })
+                };
             }
             catch (Exception ex)
             {
@@ -177,44 +141,63 @@ namespace MilsatInternAPI.Services
             }
         }
 
-        public async Task<GenericResponse<MentorResponseDTO>> UpdateMentor(UpdateMentorVm vm)
+        public async Task<GenericResponse<List<MentorResponseDTO>>> GetMentors(GetMentorVm vm, int pageNumber, int pageSize)
+        {
+            try
+            {
+                _logger.LogInformation($"Received a request to Fetch Intern(s): Request:{JsonConvert.SerializeObject(vm)}");
+                var filtered = await _userRepo.GetAll().Include(e => e.Mentor).ThenInclude(e => e.Interns)
+                                                     .Where(x => x.Role == RoleType.Mentor &&
+                                                            (vm.name == null || x.FullName.Contains(vm.name)
+                                                            && vm.department == null || x.Department == vm.department))
+                                                     .Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+                var users = MentorResponseData(filtered);
+                return new GenericResponse<List<MentorResponseDTO>>
+                {
+                    Successful = true,
+                    ResponseCode = ResponseCode.Successful,
+                    Data = users
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception occured while Fecthing Data Request. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
+                return new GenericResponse<List<MentorResponseDTO>>
+                {
+                    Successful = false,
+                    ResponseCode = ResponseCode.EXCEPTION_ERROR
+                };
+            }
+        }
+
+        public async Task<GenericResponse<List<MentorResponseDTO>>> UpdateMentor(UpdateMentorVm vm)
         {
             _logger.LogInformation($"Received a request to update Mentor: Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                var mentor = await _mentorRepo.GetAll()
-                    .Include(x => x.Interns)
+                var mentor = await _userRepo.GetAll()
+                    .Include(x => x.Mentor).ThenInclude(x => x.Interns)
                     .Where(x => x.UserId.ToString() == vm.MentorId)
                     .FirstOrDefaultAsync();
 
                 if (mentor == null)
                 {
-                    return new GenericResponse<MentorResponseDTO>
+                    return new GenericResponse<List<MentorResponseDTO>>
                     {
                         Successful = false,
-                        ResponseCode = ResponseCode.NotFound
+                        ResponseCode = ResponseCode.NotFound,
+                        Message = "User not found"
                     };
                 }
-                if (vm.Department != mentor.User.Department)
+                if (vm.Department != mentor.Department)
                 {
-                    mentor.User.Department = vm.Department;
-                    foreach (var intern in mentor.Interns)
-                    {
-                        intern.Mentor = null;
-                    }
-                    //mentor.Interns = new List<Intern> { };
+                    mentor.Mentor.Interns = new List<Intern> { };
 
-                    await _mentorRepo.UpdateAsync(mentor);
+                    await _userRepo.UpdateAsync(mentor);
                 }
 
-                var updatedIntern = new MentorResponseDTO
-                {
-                    UserId = mentor.UserId,
-                    FullName = mentor.User.FullName,
-                    Department = mentor.User.Department,
-                    InternUserIDs = new List<Guid>()
-                };
-                return new GenericResponse<MentorResponseDTO>
+                var updatedIntern = MentorResponseData(new List<User> { mentor });
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
                     Successful = true,
                     ResponseCode = ResponseCode.Successful,
@@ -224,7 +207,7 @@ namespace MilsatInternAPI.Services
             catch (Exception ex)
             {
                 _logger.LogError($"Error occured while updating intern. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
-                return new GenericResponse<MentorResponseDTO>
+                return new GenericResponse<List<MentorResponseDTO>>
                 {
                     Successful = false,
                     ResponseCode = ResponseCode.EXCEPTION_ERROR

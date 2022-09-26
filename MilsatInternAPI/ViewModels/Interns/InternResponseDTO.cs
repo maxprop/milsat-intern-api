@@ -12,7 +12,7 @@ namespace MilsatInternAPI.ViewModels.Interns
         public string CourseOfStudy { get; set; }
         public string Institution { get; set; }
         public GenderType Gender { get; set; }
-        public Guid? MentorUserId { get; set; }
+        public Guid? MentorUserId { get; set; } 
         public int Year { get; set; }
         public string Bio { get; set; }
         public string ProfilePicture { get; set; }

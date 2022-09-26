@@ -30,7 +30,7 @@ namespace MilsatInternAPI.Data
             modelBuilder.Entity<Intern>()
                 .HasOne(e => e.Mentor)
                 .WithMany(e => e.Interns)
-                .OnDelete(DeleteBehavior.ClientCascade);
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
             modelBuilder.Entity<Mentor>()
                 .HasOne(e => e.User)

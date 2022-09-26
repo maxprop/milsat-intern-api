@@ -28,7 +28,7 @@ namespace MilsatInternAPI.Controllers
 
 
         // GET: api/Mentors
-        [HttpGet("GetAllMentors"), Authorize(Roles = $"{nameof(RoleType.Admin)}, {nameof(RoleType.Mentor)}" )]
+        [HttpGet("GetAllMentors"), Authorize]
         public async Task<ActionResult<List<MentorResponseDTO>>> GetMentor(int pageNumber = 1, int pageSize = 15)
         {
             var result = await _mentorService.GetAllMentors(pageNumber, pageSize);
@@ -41,10 +41,10 @@ namespace MilsatInternAPI.Controllers
 
 
         // GET: api/Mentors/5
-        [HttpGet("GetMentor"), Authorize(Roles = $"{nameof(RoleType.Admin)}, {nameof(RoleType.Mentor)}")]
-        public async Task<ActionResult<MentorResponseDTO>> GetMentor([FromQuery] GetMentorVm vm)
+        [HttpGet("GetMentor"), Authorize] //(Roles = $"{nameof(RoleType.Admin)}, {nameof(RoleType.Mentor)}")
+        public async Task<ActionResult<MentorResponseDTO>> GetMentor([FromQuery] GetMentorVm vm, int pageNumber = 1, int pageSize = 15)
         {
-            var result = await _mentorService.GetMentors(vm);
+            var result = await _mentorService.GetMentors(vm, pageNumber, pageSize);
             if (!result.Successful)
             {
                 return BadRequest(result);
@@ -52,10 +52,21 @@ namespace MilsatInternAPI.Controllers
             return Ok(result);
         }
 
+        // GET: api/Mentors/5
+        [HttpGet("GetMentor/{id}"), Authorize]
+        public async Task<ActionResult<MentorResponseDTO>> GetMentor(Guid id)
+        {
+            var result = await _mentorService.GetMentorById(id);
+            if (!result.Successful)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
 
         // PUT: api/Mentors/5
         [HttpPut("UpdateMentor"), Authorize(Roles = nameof(RoleType.Admin))]
-        public async Task<ActionResult<MentorResponseDTO>> PutMentor(UpdateMentorVm mentor)
+        public async Task<ActionResult<List<MentorResponseDTO>>> PutMentor(UpdateMentorVm mentor)
         {
             var result = await _mentorService.UpdateMentor(mentor);
             if (!result.Successful)
