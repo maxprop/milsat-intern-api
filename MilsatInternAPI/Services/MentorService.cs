@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MilsatInternAPI.Common;
 using MilsatInternAPI.Enums;
 using MilsatInternAPI.Interfaces;
 using MilsatInternAPI.Models;
@@ -15,16 +16,17 @@ namespace MilsatInternAPI.Services
         private readonly IAsyncRepository<User> _userRepo;
         private readonly IAsyncRepository<Mentor> _mentorRepo;
         private readonly IAuthentication _authService;
-        private readonly IHttpContextAccessor _httpContext;
-        public MentorService(IAsyncRepository<Mentor> mentorRepo,
+        private readonly IConfiguration _iconfig;
+
+        public MentorService(IConfiguration iconfig, IAsyncRepository<Mentor> mentorRepo,
             ILogger<MentorService> logger, IAuthentication authService,
-            IAsyncRepository<User> userRepo, IHttpContextAccessor httpContext)
+            IAsyncRepository<User> userRepo)
         {
             _mentorRepo = mentorRepo;
             _logger = logger;
             _authService = authService;
             _userRepo = userRepo;
-            _httpContext = httpContext;
+            _iconfig = iconfig;
         }
 
         public async Task<GenericResponse<List<MentorResponseDTO>>> AddMentor(List<CreateMentorVm> vm)
@@ -177,7 +179,7 @@ namespace MilsatInternAPI.Services
             {
                 var mentor = await _userRepo.GetAll()
                     .Include(x => x.Mentor).ThenInclude(x => x.Interns)
-                    .Where(x => x.UserId.ToString() == vm.MentorId)
+                    .Where(x => x.UserId == vm.MentorId)
                     .FirstOrDefaultAsync();
 
                 if (mentor == null)
@@ -186,9 +188,12 @@ namespace MilsatInternAPI.Services
                     {
                         Successful = false,
                         ResponseCode = ResponseCode.NotFound,
-                        Message = "User not found"
+                        Message = "User not found" 
                     };
                 }
+                mentor.FullName = vm.FullName ;
+                mentor.Email = vm.Email;
+                mentor.PhoneNumber = vm.PhoneNumber;
                 if (vm.Department != mentor.Department)
                 {
                     mentor.Mentor.Interns = new List<Intern> { };
@@ -215,12 +220,13 @@ namespace MilsatInternAPI.Services
             }
         }
 
-        public static List<MentorResponseDTO> MentorResponseData(List<Mentor> source)
+        public List<MentorResponseDTO> MentorResponseData(List<Mentor> source)
         {
             List<MentorResponseDTO> mentors = new();
             foreach (var mentor in source)
             {
                 var interns = AssignedIntern(mentor.Interns);
+                string profilePicture = Utils.GetUserPicture(_iconfig["ProfilePicturesPath"], mentor.User.ProfilePicture);
                 mentors.Add(new MentorResponseDTO
                 {
                     UserId = mentor.UserId,
@@ -230,14 +236,14 @@ namespace MilsatInternAPI.Services
                     Department = mentor.User.Department,
                     Gender = mentor.User.Gender,
                     Bio = mentor.User.Bio,
-                    ProfilePicture = mentor.User.ProfilePicture,
+                    ProfilePicture = profilePicture,
                     InternUserIDs = interns
                 });
             };
             return mentors;
         }
 
-        public static List<MentorResponseDTO> MentorResponseData(List<User> source)
+        public List<MentorResponseDTO> MentorResponseData(List<User> source)
         {
             List<MentorResponseDTO> mentors = new();
             foreach (var mentor in source)
@@ -252,7 +258,7 @@ namespace MilsatInternAPI.Services
                     Department = mentor.Department,
                     Gender = mentor.Gender,
                     Bio = mentor.Bio,
-                    ProfilePicture = mentor.ProfilePicture,
+                    ProfilePicture = Utils.GetUserPicture(_iconfig["ProfilePicturesPath"], mentor.ProfilePicture),
                     InternUserIDs = interns
                 });
             };

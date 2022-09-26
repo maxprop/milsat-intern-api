@@ -1,10 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MilsatInternAPI.Common;
 using MilsatInternAPI.Enums;
 using MilsatInternAPI.Interfaces;
 using MilsatInternAPI.Models;
 using MilsatInternAPI.ViewModels;
 using MilsatInternAPI.ViewModels.Users;
 using Newtonsoft.Json;
+using System.Security.Claims;
 
 namespace MilsatInternAPI.Services
 {
@@ -13,12 +16,15 @@ namespace MilsatInternAPI.Services
         private readonly IAsyncRepository<User> _userRepo;
         private readonly ILogger<InternService> _logger;
         private readonly IConfiguration _iconfig;
+        private readonly IHttpContextAccessor _httpContext;
+
         public UserService(IConfiguration iconfig,
-            ILogger<InternService> logger, IAsyncRepository<User> userRepo)
+            ILogger<InternService> logger, IAsyncRepository<User> userRepo, IHttpContextAccessor httpContext)
         {
             _logger = logger;
             _userRepo = userRepo;
             _iconfig = iconfig;
+            _httpContext = httpContext;
         }
 
 
@@ -114,25 +120,25 @@ namespace MilsatInternAPI.Services
         }
 
 
-        public string GetUserPicture(string fileName)
-        {
-            var filePath = Path.Combine(_iconfig["ProfilePicturesPath"], fileName);
-            if (!File.Exists(filePath))
-            {
-                return String.Empty;
-            }
-            byte[] contents = File.ReadAllBytes(filePath);
-            string image = Convert.ToBase64String(contents);
-            return image;
-        }
-
-
-        public async Task<GenericResponse<UserResponseDTO>> UpdateProfile(UpdateUserVm vm)
+        public async Task<GenericResponse<UserResponseDTO>> UpdateProfile([FromForm] UpdateUserVm vm)
         {
             _logger.LogInformation($"Received to update user profile: Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                var user = await _userRepo.GetByIdAsync(vm.UserId);
+                var user_claim = _httpContext?.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (user_claim == null)
+                {
+                    return new GenericResponse<UserResponseDTO>
+                    {
+                        Successful = false,
+                        ResponseCode = ResponseCode.EXCEPTION_ERROR,
+                        Message = "Error occured while authenticating user"
+                    };
+                }
+
+                string user_id = user_claim.Value;
+
+                var user = await _userRepo.GetByIdAsync(Guid.Parse(user_id));
 
                 if (user == null)
                 {
@@ -151,6 +157,7 @@ namespace MilsatInternAPI.Services
                     {
                         fileName = Path.GetRandomFileName(); 
                     }
+                    Directory.CreateDirectory(_iconfig["ProfilePicturesPath"]);
                     var filePath = Path.Combine(_iconfig["ProfilePicturesPath"], fileName);
 
                     using (var stream = File.Create(filePath))
@@ -161,6 +168,7 @@ namespace MilsatInternAPI.Services
                 }
 
                 user.Bio = vm.Bio;
+                await _userRepo.UpdateAsync(user);
 
                 return new GenericResponse<UserResponseDTO>
                 {
@@ -218,6 +226,7 @@ namespace MilsatInternAPI.Services
             List<UserResponseDTO> users = new();
             foreach (var user in pagedData)
             {
+                string profilePicture = Utils.GetUserPicture(_iconfig["ProfilePicturesPath"], user.ProfilePicture);
                 users.Add(new UserResponseDTO
                 {
                     UserId = user.UserId,
@@ -225,7 +234,7 @@ namespace MilsatInternAPI.Services
                     FullName = user.FullName,
                     PhoneNumber = user.PhoneNumber,
                     Bio = user.Bio,
-                    ProfilePicture = GetUserPicture(user.ProfilePicture),
+                    ProfilePicture = profilePicture,
                     Department = user.Department,
                     Role = user.Role,
                 });

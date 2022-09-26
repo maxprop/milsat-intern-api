@@ -49,8 +49,8 @@ namespace MilsatInternAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPost("UpdateUser"), Authorize]
-        public async Task<ActionResult<List<UserResponseDTO>>> UpdateUserProfile(UpdateUserVm vm)
+        [HttpPut("UpdateUser"), Authorize]
+        public async Task<ActionResult<List<UserResponseDTO>>> UpdateUserProfile([FromForm] UpdateUserVm vm)
         {
             var result = await _userService.UpdateProfile(vm);
             if (!result.Successful)

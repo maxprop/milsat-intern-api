@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MilsatInternAPI.Common;
 using MilsatInternAPI.Data;
 using MilsatInternAPI.Enums;
 using MilsatInternAPI.Interfaces;
@@ -17,14 +18,17 @@ namespace MilsatInternAPI.Services
         private readonly IAsyncRepository<User> _userRepo;
         private readonly IAuthentication _authService;
         private readonly ILogger<InternService> _logger;
+        private readonly IConfiguration _iconfig;
         public InternService(IAsyncRepository<Intern> internRepo, IAsyncRepository<Mentor> mentorRepo,
-            ILogger<InternService> logger, IAuthentication authService, IAsyncRepository<User> userRepo)
+            ILogger<InternService> logger, IAuthentication authService, IAsyncRepository<User> userRepo,
+            IConfiguration iconfig)
         {
             _internRepo = internRepo;
             _mentorRepo = mentorRepo;
             _userRepo = userRepo;
             _logger = logger;
             _authService = authService;
+            _iconfig = iconfig;
         }
 
         public async Task<GenericResponse<List<InternResponseDTO>>> AddIntern(CreateInternDTO request)
@@ -57,23 +61,17 @@ namespace MilsatInternAPI.Services
                     Institution = request.Institution,
                 };
 
-                if (!String.IsNullOrEmpty(request.MentorId))
+                if (request.MentorId != null)
                 {
-                    var trueGuid = Guid.TryParse(request.MentorId, out var MentorGuid);
-                    if (!trueGuid)
-                    {
-                        return new GenericResponse<List<InternResponseDTO>>
-                        {
-                            Successful = false,
-                            ResponseCode = ResponseCode.INVALID_REQUEST,
-                            Message = "Invalid MentorID Supplied"
-                        };
-                    }
-                    Mentor selectedMentor = await _mentorRepo.GetAll().Include(x => x.User).SingleAsync(x => x.UserId == MentorGuid);
+                    Mentor selectedMentor = await _mentorRepo.GetAll().Include(x => x.User).SingleAsync(x => x.UserId == request.MentorId);
                     if (selectedMentor != null && selectedMentor.User.Department == newUser.Department)
                     {
                         newIntern.MentorId = selectedMentor.UserId;
                     }
+                }
+                else
+                {
+                    newIntern.MentorId = null;
                 }
                 await _userRepo.AddAsync(newUser);
                 newIntern.UserId = newUser.UserId;
@@ -200,7 +198,10 @@ namespace MilsatInternAPI.Services
             _logger.LogInformation($"Received a request to update Intern: Request:{JsonConvert.SerializeObject(vm)}");
             try
             {
-                var user = await _userRepo.GetByIdAsync(vm.UserId);
+                var user = await _userRepo.GetAll()
+                    .Include(x => x.Intern)
+                    .Where(x => x.UserId == vm.UserId)
+                    .FirstOrDefaultAsync();
 
                 if (user == null)
                 {
@@ -212,11 +213,26 @@ namespace MilsatInternAPI.Services
                 }
 
                 user.Department = vm.Department;
-                var selectedMentor = await _mentorRepo.GetByIdAsync(vm.MentorId);
-                if (selectedMentor != null)
+                user.FullName = vm.FullName;
+                user.Email = vm.Email;
+                user.PhoneNumber = vm.PhoneNumber;
+
+                if (vm.MentorId != null)
                 {
-                    user.Intern.MentorId = vm.MentorId;
+                    var selectedMentor = await _userRepo.GetAll().Where(x => x.UserId == vm.MentorId
+                                                                        && x.Department == vm.Department
+                                                                        && x.Role == RoleType.Mentor)
+                                                                        .FirstOrDefaultAsync();
+                    if (selectedMentor != null)
+                    {
+                        user.Intern.MentorId = selectedMentor.UserId;
+                    }
                 }
+                else
+                {
+                    user.Intern.MentorId = null;
+                }
+
                 await _userRepo.UpdateAsync(user);
                 return new GenericResponse<List<InternResponseDTO>>
                 {
@@ -241,6 +257,7 @@ namespace MilsatInternAPI.Services
             List<InternResponseDTO> interns = new();
             foreach (var user in source)
             {
+                string profilePicture = Utils.GetUserPicture(_iconfig["ProfilePicturesPath"], user.ProfilePicture);
                 interns.Add(new InternResponseDTO
                 {
                     UserId = user.UserId,
@@ -253,7 +270,7 @@ namespace MilsatInternAPI.Services
                     Gender = user.Gender,
                     Year = user.Intern.Year,
                     Bio = user.Bio,
-                    ProfilePicture = user.ProfilePicture, 
+                    ProfilePicture = profilePicture, 
                     MentorUserId = user.Intern.MentorId,
                 });
             };
