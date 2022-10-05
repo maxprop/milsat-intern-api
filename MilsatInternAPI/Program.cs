@@ -62,6 +62,13 @@ try
     builder.Services.AddScoped<IInternService, InternService>();
     builder.Services.AddScoped<IMentorService, MentorService>();
 
+    builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
+        policy =>
+        {
+            policy.WithOrigins(builder.Configuration.GetSection("OriginBase").Value)
+                .AllowAnyMethod().AllowAnyHeader();
+        }));
+
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
@@ -73,6 +80,7 @@ try
     app.UseSwagger();
     app.UseSwaggerUI();
 
+    app.UseCors("NgOrigins");
     app.UseHttpsRedirection();
 
     app.UseAuthentication();
