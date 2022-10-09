@@ -65,7 +65,9 @@ try
     builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
         policy =>
         {
-            policy.WithOrigins(builder.Configuration.GetSection("OriginBase").Value)
+            policy.WithOrigins(
+                builder.Configuration.GetSection("OriginBase1").Value,
+                builder.Configuration.GetSection("OriginBase2").Value)
                 .AllowAnyMethod().AllowAnyHeader();
         }));
 
