@@ -67,7 +67,7 @@ try
         {
             policy.WithOrigins(
                 builder.Configuration.GetSection("OriginBase1").Value,
-                builder.Configuration.GetSection("OriginBase1").Value)
+                builder.Configuration.GetSection("OriginBase2").Value)
                 .AllowAnyMethod().AllowAnyHeader();
         }));
 
