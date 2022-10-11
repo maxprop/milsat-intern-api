@@ -22,6 +22,8 @@ namespace MilsatInternAPI.Data
         public DbSet<Mentor> Mentor { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>().HasQueryFilter(b => !b.isDeleted);
+
             modelBuilder.Entity<Intern>()
                 .HasOne(e => e.User)
                 .WithOne(e => e.Intern)
@@ -38,12 +40,37 @@ namespace MilsatInternAPI.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             var all = createUsers();
-            modelBuilder.Entity<User>().HasData(all[0], all[1], all[2]);
+            modelBuilder.Entity<User>()
+                .HasData(all[0], all[1], all[2]);
 
-            modelBuilder.Entity<Mentor>().HasData(
-            new Mentor {UserId = all[0].UserId },
-            new Mentor {UserId = all[1].UserId });
+            modelBuilder.Entity<Mentor>()
+                .HasData( new Mentor { UserId = all[0].UserId }, 
+                          new Mentor { UserId = all[1].UserId });
         }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            UpdateSoftDeleteStatuses();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        private void UpdateSoftDeleteStatuses()
+        {
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.CurrentValues["isDeleted"] = false;
+                        break;
+                    case EntityState.Deleted:
+                        entry.State = EntityState.Modified;
+                        entry.CurrentValues["isDeleted"] = true;
+                        break;
+                }
+            }
+        }
+
         private List<User> createUsers()
         {
             var all = new List<User>();
@@ -51,7 +78,7 @@ namespace MilsatInternAPI.Data
             {
                 var user = new User { 
                     UserId = Guid.NewGuid(), Email = $"mentor{i}@gmail.com", Role = RoleType.Mentor,
-                    FullName = "Sodiq Agboola", PhoneNumber = "string", Department = DepartmentType.Backend,
+                    FullName = "Sodiq Agboola", PhoneNumber = "passwords", Department = DepartmentType.Backend,
                 };
                 var _user = setter(user, user.PhoneNumber);
                 all.Add(_user);
@@ -59,7 +86,7 @@ namespace MilsatInternAPI.Data
 
             var admin = new User {
                 UserId = Guid.NewGuid(), Email = "admin@milsat.com", Role = RoleType.Admin,
-                FullName = "Admin", PhoneNumber = "home", Department = DepartmentType.Staff
+                FullName = "Admin", PhoneNumber = "datasolutions", Department = DepartmentType.Staff
             };
             var _admin = setter(admin, admin.PhoneNumber);
             all.Add(_admin);

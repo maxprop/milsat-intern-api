@@ -4,8 +4,10 @@ namespace MilsatInternAPI.ViewModels
 {
     public class UserLoginDTO
     {
-        [RegularExpression(@"[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}", ErrorMessage = "Please enter Valid Email ID")]
+        [Required, EmailAddress]
         public string Email { get; set; }
+        [Required, MinLength(9)]
         public string Password { get; set; }
+
     }
 }

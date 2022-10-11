@@ -21,7 +21,8 @@ try
     //    options.UseMySql(builder.Configuration.GetConnectionString("MilsatInternAPIContext") ,
     //    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MilsatInternAPIContext"))));
     builder.Services.AddDbContext<MilsatInternAPIContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("MilsatInternAPIContext") ?? throw new InvalidOperationException("Connection string 'MilsatInternAPIContext' not found.")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("MilsatInternAPIContext") ?? throw new InvalidOperationException("Connection string 'MilsatInternAPIContext' not found.")));
 
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
@@ -61,6 +62,16 @@ try
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IInternService, InternService>();
     builder.Services.AddScoped<IMentorService, MentorService>();
+    builder.Services.AddScoped<IEmailService, EmailService>();
+
+    builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
+        policy =>
+        {
+            policy.WithOrigins(
+                builder.Configuration.GetSection("OriginBase1").Value,
+                builder.Configuration.GetSection("OriginBase2").Value)
+                .AllowAnyMethod().AllowAnyHeader();
+        }));
 
     var app = builder.Build();
 
@@ -73,6 +84,7 @@ try
     app.UseSwagger();
     app.UseSwaggerUI();
 
+    app.UseCors("NgOrigins");
     app.UseHttpsRedirection();
 
     app.UseAuthentication();

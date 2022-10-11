@@ -61,17 +61,19 @@ namespace MilsatInternAPI.Services
                     Institution = request.Institution,
                 };
 
-                if (request.MentorId != null)
+                if (request.MentorId != Guid.Empty)
                 {
-                    Mentor selectedMentor = await _mentorRepo.GetAll().Include(x => x.User).SingleAsync(x => x.UserId == request.MentorId);
-                    if (selectedMentor != null && selectedMentor.User.Department == newUser.Department)
+                    var selectedMentor = await _mentorRepo.GetAll().Include(x => x.User).FirstOrDefaultAsync(x => x.UserId == request.MentorId);
+                    if (selectedMentor == null || selectedMentor.User.Department != newUser.Department)
                     {
-                        newIntern.MentorId = selectedMentor.UserId;
+                        return new GenericResponse<List<InternResponseDTO>>
+                        {
+                            Successful = false,
+                            ResponseCode = ResponseCode.NotFound,
+                            Message = "Mentor Id Not Found"
+                        };
                     }
-                }
-                else
-                {
-                    newIntern.MentorId = null;
+                    newIntern.MentorId = selectedMentor.UserId;
                 }
                 await _userRepo.AddAsync(newUser);
                 newIntern.UserId = newUser.UserId;
@@ -217,16 +219,22 @@ namespace MilsatInternAPI.Services
                 user.Email = vm.Email;
                 user.PhoneNumber = vm.PhoneNumber;
 
-                if (vm.MentorId != null)
+                if (vm.MentorId != Guid.Empty)
                 {
                     var selectedMentor = await _userRepo.GetAll().Where(x => x.UserId == vm.MentorId
                                                                         && x.Department == vm.Department
                                                                         && x.Role == RoleType.Mentor)
                                                                         .FirstOrDefaultAsync();
-                    if (selectedMentor != null)
+                    if (selectedMentor == null)
                     {
-                        user.Intern.MentorId = selectedMentor.UserId;
+                        return new GenericResponse<List<InternResponseDTO>>
+                        {
+                            Successful = false,
+                            ResponseCode = ResponseCode.NotFound,
+                            Message = "No Mentor with this Id was found"
+                        };
                     }
+                    user.Intern.MentorId = selectedMentor.UserId;
                 }
                 else
                 {
