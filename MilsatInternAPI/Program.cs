@@ -17,11 +17,12 @@ logger.Debug("init main");
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-    builder.Services.AddDbContext<MilsatInternAPIContext>(options => 
-        options.UseMySql(builder.Configuration.GetConnectionString("MilsatInternAPIContext") ,
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MilsatInternAPIContext"))));
-    //builder.Services.AddDbContext<MilsatInternAPIContext>(options =>
-    //options.UseSqlServer(builder.Configuration.GetConnectionString("MilsatInternAPIContext") ?? throw new InvalidOperationException("Connection string 'MilsatInternAPIContext' not found.")));
+    //builder.Services.AddDbContext<MilsatInternAPIContext>(options => 
+    //    options.UseMySql(builder.Configuration.GetConnectionString("MilsatInternAPIContext") ,
+    //    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MilsatInternAPIContext"))));
+    builder.Services.AddDbContext<MilsatInternAPIContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("MilsatInternAPIContext") ?? throw new InvalidOperationException("Connection string 'MilsatInternAPIContext' not found.")));
 
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
@@ -61,6 +62,7 @@ try
     builder.Services.AddScoped<IUserService, UserService>();
     builder.Services.AddScoped<IInternService, InternService>();
     builder.Services.AddScoped<IMentorService, MentorService>();
+    builder.Services.AddScoped<IEmailService, EmailService>();
 
     builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
         policy =>

@@ -1,4 +1,5 @@
-﻿using MailKit.Net.Smtp;
+﻿using MailKit.Net.Imap;
+using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +11,7 @@ using MilsatInternAPI.ViewModels;
 using MilsatInternAPI.ViewModels.Interns;
 using MilsatInternAPI.ViewModels.Users;
 using MimeKit;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -21,74 +23,100 @@ namespace MilsatInternAPI.Services
         private readonly IConfiguration _iconfig;
         private readonly IAsyncRepository<User> _User;
         private readonly ILogger<AuthService> _logger;
+        private readonly IEmailService _Email;
         private readonly IHttpContextAccessor _httpContext;
 
         public AuthService(
-            IConfiguration config, IAsyncRepository<User> user,
+            IConfiguration config, IAsyncRepository<User> user, IEmailService emailService,
             ILogger<AuthService> logger, IHttpContextAccessor httpContext)
         {
             _iconfig = config;
             _logger = logger;
             _User = user;
             _httpContext = httpContext;
+            _Email = emailService;
         }
         public async Task<AuthResponseDTO> Login(UserLoginDTO request)
         {
-            var user = await _User.GetAll().Where(x => x.Email == request.Email).FirstOrDefaultAsync();
-            if (user == null)
+            try
             {
-                return new AuthResponseDTO()
+                _logger.LogInformation($"Received a request to login a user: Request:{JsonConvert.SerializeObject(request)}");
+                var user = await _User.GetAll().Where(x => x.Email == request.Email).FirstOrDefaultAsync();
+                if (user == null)
                 {
-                    Success = false,
-                    responseCode = ResponseCode.NotFound,
-                    Message = "Either the email or password is incorrect"
-                };
-            }
-            if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
-            {
-                return new AuthResponseDTO()
+                    return new AuthResponseDTO()
+                    {
+                        Success = false,
+                        responseCode = ResponseCode.NotFound,
+                        Message = "Either the email or password is incorrect"
+                    };
+                }
+                if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
                 {
-                    Success = false,
-                    responseCode = ResponseCode.INVALID_REQUEST,
-                    Message = "Either the email or password is incorrect"
-                };
-            }
-            string token = CreateToken(user);
-            var refreshToken = CreateRefreshToken();
-            await SetRefreshToken(refreshToken, user);
+                    return new AuthResponseDTO()
+                    {
+                        Success = false,
+                        responseCode = ResponseCode.INVALID_REQUEST,
+                        Message = "Either the email or password is incorrect"
+                    };
+                }
+                string token = CreateToken(user);
+                var refreshToken = CreateRefreshToken();
+                await SetRefreshToken(refreshToken, user);
 
-            return new AuthResponseDTO {
-                Success = true,
-                responseCode = ResponseCode.Successful,
-                Token = token,
-                RefreshToken = refreshToken.Token,
-                TokenExpires = refreshToken.Expires
-            };
+                return new AuthResponseDTO
+                {
+                    Success = true,
+                    responseCode = ResponseCode.Successful,
+                    Token = token,
+                    RefreshToken = refreshToken.Token,
+                    TokenExpires = refreshToken.Expires
+                };
+            } 
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error while trying to login user. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
+                return new AuthResponseDTO()
+                {
+                    Success = false,
+                    responseCode = ResponseCode.EXCEPTION_ERROR,
+                    Message = "Unable to login at this moment"
+                };
+            }
         }
 
         public async Task<AuthResponseDTO> RefreshToken()
         {
-            var refreshToken = _httpContext?.HttpContext?.Request.Cookies["refreshToken"];
-            var user = await _User.GetAll().Where(u => u.RefreshToken == refreshToken).FirstOrDefaultAsync();
-            if(user == null)
+            try
             {
-                return new AuthResponseDTO { Message = "Invalid Refresh Token" };
-            }
-            else if(user.TokenExpires < DateTime.UtcNow)
-            {
-                return new AuthResponseDTO { Message = "Token Expired." };
-            }
+                var refreshToken = _httpContext?.HttpContext?.Request.Cookies["refreshToken"];
+                _logger.LogInformation($"Received a request to refresh user credentials: Request:{refreshToken}");
+                var user = await _User.GetAll().Where(u => u.RefreshToken == refreshToken).FirstOrDefaultAsync();
+                if (user == null)
+                {
+                    return new AuthResponseDTO { Success = false, Message = "Invalid Refresh Token" };
+                }
+                else if (user.TokenExpires < DateTime.UtcNow)
+                {
+                    return new AuthResponseDTO { Success = false, Message = "Token Expired." };
+                }
 
-            string token = CreateToken(user);
-            var newRefreshToken = CreateRefreshToken();
-            await SetRefreshToken(newRefreshToken, user);
-            return new AuthResponseDTO
+                string token = CreateToken(user);
+                var newRefreshToken = CreateRefreshToken();
+                await SetRefreshToken(newRefreshToken, user);
+                return new AuthResponseDTO
+                {
+                    Success = true,
+                    Token = token,
+                    RefreshToken = newRefreshToken.Token,
+                    TokenExpires = newRefreshToken.Expires
+                };
+            }
+            catch (Exception ex)
             {
-                Success = true,
-                Token = token,
-                RefreshToken = newRefreshToken.Token,
-                TokenExpires = newRefreshToken.Expires
-            };
+                _logger.LogError($"Error while trying to refresh user credentials. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
+                return new AuthResponseDTO { Success = false, Message = "Unable to refresh user credentials at the moment" };
+            }
         }
 
         public User RegisterPassword(User user, string defaultPassword)
@@ -99,64 +127,72 @@ namespace MilsatInternAPI.Services
             return user;
         }
 
-        public void SendEmail(string token)
-        {
-            string body = $"{_iconfig.GetSection("EmailService:body").Value} with {token}";
-            var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse(_iconfig.GetSection("EmailService:username").Value));
-            email.To.Add(MailboxAddress.Parse(_iconfig.GetSection("EmailService:username").Value));
-            email.Subject = _iconfig.GetSection("EmailService:subject").Value;
-            email.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = body };
-
-            using var smtp = new SmtpClient();
-            smtp.Connect(
-                _iconfig.GetSection("EmailService:host").Value,
-                int.Parse(_iconfig.GetSection("EmailService:port").Value),
-                SecureSocketOptions.StartTls
-                );
-            smtp.Authenticate( 
-                _iconfig.GetSection("EmailService:username").Value,
-                _iconfig.GetSection("EmailService:password").Value
-                );
-            smtp.Send(email);
-            smtp.Disconnect(true);
-
-        }
-
         public async Task<ForgotPasswordResponse> ForgotPassword(ForgetPasswordVm request)
         {
-            var user = await _User.GetAll().Where(u => u.Email == request.Email).FirstOrDefaultAsync();
-            if (user != null)
+            try
             {
-                user.PasswordResetToken = CreateRandomToken();
-                user.PasswordTokenExpires = DateTime.UtcNow.AddDays(1);
-                await _User.UpdateAsync(user);
-
-                SendEmail(user.PasswordResetToken);
+                _logger.LogInformation($"Received a request to initialise forgot password: Request:{request}");
+                var user = await _User.GetAll().Where(u => u.Email == request.Email).FirstOrDefaultAsync();
+                if (user != null)
+                {
+                    user.PasswordResetToken = CreateRandomToken();
+                    user.PasswordTokenExpires = DateTime.UtcNow.AddDays(1);
+                    await _User.UpdateAsync(user);
+                    string subject = _iconfig.GetSection("ForgotPassword:subject").Value;
+                    string body = $"{_iconfig.GetSection("ForgotPassword:body").Value} <a href={user.PasswordResetToken}>link</a></p>";
+                    _Email.SendEmail(user.Email, subject, body);
+                    //_Email.SendEmail("matthewoke.ai@gmail.com", subject, body);
+                }
+                return new ForgotPasswordResponse
+                {
+                    Success = true,
+                    Message = "You can now reset your password by visiting your email address"
+                };
             }
-            return new ForgotPasswordResponse
+            catch (Exception ex)
             {
-                Message = "You can now reset your password"
-            };
+                _logger.LogError($"Error while initialising forgot password. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
+                return new ForgotPasswordResponse
+                {
+                    Success = false,
+                    Message = "Error occured while trying to initialise forgot password."
+                };
+            }
         }
 
         public async Task<ForgotPasswordResponse> ResetPassword(ResetPasswordVm request)
         {
-            var user = await _User.GetAll().Where(u => u.PasswordResetToken == request.Token).FirstOrDefaultAsync();
-            if (user == null || user.PasswordTokenExpires < DateTime.Now)
+            try
             {
+                _logger.LogInformation($"Received a request to Reset User Password: Request:{JsonConvert.SerializeObject(request)}");
+                var user = await _User.GetAll().Where(u => u.PasswordResetToken == request.Token).FirstOrDefaultAsync();
+                if (user == null || user.PasswordTokenExpires < DateTime.Now)
+                {
+                    return new ForgotPasswordResponse
+                    {
+                        Success = false,
+                        Message = "Invalid Password Reset Token"
+                    };
+                }
+
+                user = RegisterPassword(user, request.Password);
+                user.PasswordResetToken = CreateRandomToken(); // Allow a token to be used only once.
+                await _User.UpdateAsync(user);
                 return new ForgotPasswordResponse
                 {
-                    Message = "Invalid Password Reset Token"
+                    Success = true,
+                    Message = "Password Reset Successful"
                 };
             }
-
-            user = RegisterPassword(user, request.Password);
-            await _User.UpdateAsync(user);
-            return new ForgotPasswordResponse
+            catch (Exception ex)
             {
-                Message = "Password Reset Successful"
-            };
+                _logger.LogError($"Error while trying to reset Password. Messg: {ex.Message} : StackTrace: {ex.StackTrace}");
+                return new ForgotPasswordResponse
+                {
+                    Success = false,
+                    Message = "Unsuccessful Password Reset"
+                };
+            }
         }
 
 

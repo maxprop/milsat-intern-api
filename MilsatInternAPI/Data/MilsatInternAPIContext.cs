@@ -40,11 +40,12 @@ namespace MilsatInternAPI.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             var all = createUsers();
-            modelBuilder.Entity<User>().HasData(all[0], all[1], all[2]);
+            modelBuilder.Entity<User>()
+                .HasData(all[0], all[1], all[2]);
 
-            modelBuilder.Entity<Mentor>().HasData(
-            new Mentor {UserId = all[0].UserId },
-            new Mentor {UserId = all[1].UserId });
+            modelBuilder.Entity<Mentor>()
+                .HasData( new Mentor { UserId = all[0].UserId }, 
+                          new Mentor { UserId = all[1].UserId });
         }
 
         public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default(CancellationToken))

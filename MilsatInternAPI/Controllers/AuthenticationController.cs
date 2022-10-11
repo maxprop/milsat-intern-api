@@ -6,6 +6,7 @@ using MilsatInternAPI.Interfaces;
 using MilsatInternAPI.ViewModels;
 using MilsatInternAPI.ViewModels.Interns;
 using MilsatInternAPI.ViewModels.Mentors;
+using MilsatInternAPI.ViewModels.Users;
 
 namespace MilsatInternAPI.Controllers
 {
@@ -60,6 +61,28 @@ namespace MilsatInternAPI.Controllers
         public async Task<ActionResult<string>> RefreshToken()
         {
             var response = await _authService.RefreshToken();
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpPost("ForgotPassword"), AllowAnonymous]
+        public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword(ForgetPasswordVm vm)
+        {
+            var response = await _authService.ForgotPassword(vm);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpPost("ResetPassword"), AllowAnonymous]
+        public async Task<ActionResult<ForgotPasswordResponse>> ResetPassword(ResetPasswordVm vm)
+        {
+            var response = await _authService.ResetPassword(vm);
             if (!response.Success)
             {
                 return BadRequest(response);
